@@ -12,7 +12,7 @@ def main():
 
 
     IND_SIZE = 8     #length of genome
-    POP_SIZE = 120    #number of members in the population
+    POP_SIZE = 100    #number of members in the population
     DECISION_SIZE = 3 #four decisions can be made
 
     toolbox = base.Toolbox()    #initialize toolbox
@@ -40,19 +40,33 @@ def main():
 
 
     #3 bits for offers remaining, 3 bits for offer amount (values in [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000])
-    for gen in range(1):
-        offersLeft = random.randint(2, 16)
-        random.shuffle(population)
-        #while(offersLeft > 0):
-        for member in population:
-            customfunctions.makeDecision(offersLeft, member)
-
+    for gen in range(100):
+        #initial number of "free tickets"
+        if gen % 50 == 0:
+            print "Generation " + str(gen)
+        offersLeft = random.randint(8, 16)
+        #print "Starting offers:\t " + str(offersLeft)
+        while(offersLeft > 0):
+            #so the first members aren't always the same
+            random.shuffle(population)
+            x = 1
+            #goes through everyone in population to decide whether to accept or reject the reward
+            for member in population:
+                #print "person " + str(x)
+                [decision, offersLeft] = customfunctions.makeDecision(offersLeft, member)
+                x += 1
 
         offspring = algorithms.varAnd(population, toolbox, cxpb=CXPB, mutpb=MUTPB)
         fits = toolbox.map(toolbox.evaluate, offspring)
         for fit, ind in zip(fits, offspring):
             ind.fitness.values = fit
         population = offspring
+
+
+    #print output with top members
+    all_ind = tools.selBest(population, len(population))
+    for ind in all_ind:
+        print ind[2]
 
 
 if __name__ == "__main__":
