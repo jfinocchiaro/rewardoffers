@@ -31,7 +31,7 @@ def main():
     #initialize evolution methods
     toolbox.register("evaluate", customfunctions.evaluate)
     toolbox.register("mate", tools.cxOnePoint)
-    toolbox.register("mutate", tools.mutShuffleIndexes)
+    toolbox.register("mutate", customfunctions.mutateFlipBit)
     toolbox.register("select", tools.selNSGA2)
 
     NGEN = 5000 #number of generations of evolution
@@ -40,12 +40,13 @@ def main():
 
 
     #3 bits for offers remaining, 3 bits for offer amount (values in [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000])
-    for gen in range(NGEN):
+    for gen in range(1):
         offersLeft = random.randint(2, 16)
         random.shuffle(population)
-        while(offersLeft > 0):
-            for member in population:
-                toolbox.evaluate
+        #while(offersLeft > 0):
+        for member in population:
+            customfunctions.makeDecision(offersLeft, member)
+
 
         offspring = algorithms.varAnd(population, toolbox, cxpb=CXPB, mutpb=MUTPB)
         fits = toolbox.map(toolbox.evaluate, offspring)
