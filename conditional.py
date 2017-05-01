@@ -11,7 +11,7 @@ def main():
     creator.create("Individual", list, fitness=creator.FitnessMulti)
 
 
-    IND_SIZE = 64        #length of genome
+    IND_SIZE = 64       s#length of genome
     POP_SIZE = 100      #number of members in the population
     DECISION_SIZE = 3   #four decisions can be made
     FLIGHTS_PER_GEN = 1 #number of simulations in one generation
@@ -60,7 +60,7 @@ def main():
 
                 #goes through everyone in population to decide whether to accept or reject the reward
                 for member in population:
-                    [decision, offersLeft] = customfunctions.makeDecision(offersLeft, roundNumber, member)
+                    [decision, offersLeft] = customfunctions.makeDecisionConditional(offersLeft, roundNumber, member)
                 roundNumber += 1
 
         offspring = algorithms.varAnd(population, toolbox, cxpb=CXPB, mutpb=MUTPB)
