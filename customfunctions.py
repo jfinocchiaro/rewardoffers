@@ -1,43 +1,57 @@
 from deap import tools, base, creator, algorithms
 import random
+rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
+
 
 #evaluate score maximizing financial gains and minimizing missed oppotunities
 def evaluate(member):
     rewards = 0
-    rewards = member[2][0]
-    missedOpps = member[2][1]
+    rewards = member[1][0]
+    missedOpps = member[1][1]
     return rewards, missedOpps
 
 
-def makeDecision(offersLeft, member):
+
+#offersLeft number between 0 and 8 in decimal
+#roundNumber is what index in the rewards list they're in (0, 1, 2, ... ,7 )
+#member is the member of the population (list of lists)
+def makeDecision(offersLeft, roundNumber, member):
     decision = 0
 
-    #offer stored in genome as a binary number
-    offer = (''.join(map(str, member[1])))
-    offer = int(offer, 2)
+    #offer stored in rewards
+    offer = rewards[roundNumber]
     #print "offer:\t" + str(offer)
 
-    decision_bit = member[0][offer]
+    #roundBin = int(str(roundNumber), 2)
+    roundBin = format(roundNumber, 'b').zfill(3)
+    #offersLeftBin = int(str(offersLeft), 2)
+    offersLeftBin = format(offersLeft, 'b').zfill(3)
+
+    decision_spot = roundBin + offersLeftBin
+
+    decision_spot = int(decision_spot, 2)
+
+    decision_bit = member[0][decision_spot]
     #print "decision bit:\t" + str(decision_bit)
 
     if offersLeft > 0 and decision_bit == 0:
         decision = 0
     elif offersLeft > 0 and decision_bit == 1:
+        if offersLeft < 3:
+            decision = 1
+            offersLeft -= 1
+            member[1][0] += offer
+    elif offersLeft > 0 and decision_bit == 2:
         if offersLeft < 2:
             decision = 1
             offersLeft -= 1
-            member[2][0] += offer
-    elif offersLeft > 0 and decision_bit == 2:
-        if offersLeft < 4:
-            decision = 1
-            offersLeft -= 1
-            member[2][0] += offer
+            member[1][0] += offer
     elif offersLeft > 0 and decision_bit == 3:
         decision = 1
         offersLeft -= 1
-        member[2][0] += offer
+        member[1][0] += offer
     elif offersLeft == 0 and decision_bit != 0:
-        member[2][1] += 1 #missed opportunity increment
+        member[1][1] += 1 #missed opportunity increment
         decision = 0
 
 
