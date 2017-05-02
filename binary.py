@@ -18,7 +18,7 @@ def main():
 
     toolbox = base.Toolbox()    #initialize toolbox
     toolbox.register("initZero", random.randint, 0 , 0) #initialize to 0
-    toolbox.register("bit", random.randint, 0, 1) #create a bit 0 or 1
+    toolbox.register("bit", customfunctions.initializeNonUniform) #create a bit 0 or 1
     toolbox.register("decision", random.randint, 0, 3) #create a bit 0 to 3
 
     toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE) #list of bits makes up genome
@@ -76,7 +76,6 @@ def main():
     all_ind = tools.selBest(population, len(population))
     for ind in all_ind:
         print str(ind) + "\n"
-
 
 if __name__ == "__main__":
     main()

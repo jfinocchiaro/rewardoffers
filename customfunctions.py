@@ -17,6 +17,10 @@ def resetScores(population):
         member[1][0] = 0
         member[1][1] = 0
 
+def initializeNonUniform():
+    initializedOptions = list([0]*9 + [1])
+    return random.choice(initializedOptions)
+
 #offersLeft number between 0 and 8 in decimal
 #roundNumber is what index in the rewards list they're in (0, 1, 2, ... ,7 )
 #member is the member of the population (list of lists)
