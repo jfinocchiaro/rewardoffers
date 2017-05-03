@@ -15,10 +15,12 @@ def main():
     POP_SIZE = 100      #number of members in the population
     DECISION_SIZE = 3   #four decisions can be made
     FLIGHTS_PER_GEN = 100 #number of simulations in one generation
+    initializedOptions = list([0]*24 + [1])
+
 
     toolbox = base.Toolbox()    #initialize toolbox
     toolbox.register("initZero", random.randint, 0 , 0) #initialize to 0
-    toolbox.register("bit", customfunctions.initializeNonUniform) #create a bit 0 or 1
+    toolbox.register("bit", customfunctions.initializeNonUniform, initializedOptions) #create a bit 0 or 1
     toolbox.register("decision", random.randint, 0, 3) #create a bit 0 to 3
 
     toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE) #list of bits makes up genome
