@@ -18,10 +18,12 @@ def resetScores(population):
         member[1][0] = 0
         member[1][1] = 0
 
+def initializeNonUniform(initializedOptions):
+    return random.choice(initializedOptions)
 
-# offersLeft number between 0 and 8 in decimal
-# roundNumber is what index in the rewards list they're in (0, 1, 2, ... ,7 )
-# member is the member of the population (list of lists)
+#offersLeft number between 0 and 8 in decimal
+#roundNumber is what index in the rewards list they're in (0, 1, 2, ... ,7 )
+#member is the member of the population (list of lists)
 def makeDecisionConditional(offersLeft, roundNumber, member):
     decision = 0
 
@@ -151,4 +153,16 @@ def graphObjectives(population):
 
     plt.scatter(xs, ys)
     plt.plot(p_front[0], p_front[1])
+    plt.ylabel('# opportunities missed')
+    plt.xlabel('$ rewards taken')
+    plt.suptitle('Rewards taken vs opportunities missed')
     plt.show()
+
+def exportGenometoCSV(filename, population):
+    import csv
+    with open(filename, 'wb') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='|',
+                            quoting=csv.QUOTE_MINIMAL)
+
+        for member in population:
+            writer.writerow(member[0] + member[1])
