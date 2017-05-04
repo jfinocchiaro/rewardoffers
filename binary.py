@@ -6,78 +6,139 @@ import itertools
 import math
 
 def main():
-    #multiobjective- maximize reward, minimize missed opportunities
-    creator.create("FitnessMulti", base.Fitness, weights=(1.0,-1.0))
+    # sequence from which genome bits are chosen, uniformly
+    init_bits = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    # multiobjective- maximize reward, minimize missed opportunities
+    creator.create("FitnessMulti", base.Fitness, weights=(1.0, -1.0, -1.0))
+    # creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMulti)
+    # creator.create("Individual", list, fitness=creator.FitnessMax)
 
+    IND_SIZE = 64           # length of genome
+    POP_SIZE = 50          # number of members in the population
+    DECISION_SIZE = 3       # four decisions can be made
+    FLIGHTS_PER_GEN = 100   # number of simulations in one generation
 
-    IND_SIZE = 64        #length of genome
-    POP_SIZE = 100      #number of members in the population
-    DECISION_SIZE = 3   #four decisions can be made
-    FLIGHTS_PER_GEN = 100 #number of simulations in one generation
-    initializedOptions = list([0]*24 + [1])
+    toolbox = base.Toolbox()    # initialize toolbox
+    toolbox.register("initZero", random.randint, 0 , 0)  # initialize to 0
+    # toolbox.register("bit", random.choice, init_bits)  # create a bit 0 or 1
+    toolbox.register("bit", random.randint, 0, 1)  # create a bit 0 or 1
+    toolbox.register("decision", random.randint, 0, 3)   # create a bit 0 to 3
 
+    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)          # list of bits makes up genome
+    # toolbox.register("offerAmts", tools.initRepeat, list, toolbox.bit, DECISION_SIZE)  # list of bits makes up genome
+    # toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 2)            # list of bits makes up genome
+    # total reward, offers accepted, average accepted offer, offers lost
+    toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 4)  # list of bits makes up genome
 
-    toolbox = base.Toolbox()    #initialize toolbox
-    toolbox.register("initZero", random.randint, 0 , 0) #initialize to 0
-    toolbox.register("bit", customfunctions.initializeNonUniform, initializedOptions) #create a bit 0 or 1
-    toolbox.register("decision", random.randint, 0, 3) #create a bit 0 to 3
+    toolbox.register("individual", tools.initCycle, creator.Individual, (toolbox.genome, toolbox.scores), n=1)    # creates an individual with genome and scores
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)  # list of individuals makes up population
 
-    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE) #list of bits makes up genome
-    toolbox.register("offerAmts", tools.initRepeat, list, toolbox.bit, DECISION_SIZE) #list of bits makes up genome
-    toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 2) #list of bits makes up genome
-
-    toolbox.register("individual", tools.initCycle, creator.Individual, (toolbox.genome, toolbox.scores), n=1)    #creates an individual with genome and scores
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)  #list of individuals makes up population
-    population = toolbox.population(n=POP_SIZE) #initialize population
-
-    #initialize evolution methods
+    # initialize evolution methods
     toolbox.register("evaluate", customfunctions.evaluate)
-    toolbox.register("mate", tools.cxOnePoint)
-    toolbox.register("mutate", customfunctions.mutateFlipBit)
+    toolbox.register("mate", tools.cxUniform, indpb=0.5)
+    toolbox.register("mutate", customfunctions.mutateFlipBit, indpb=0.015)
     toolbox.register("select", tools.selNSGA2)
 
-    NGEN = 5000 #number of generations of evolution
-    CXPB = (0.9)
-    MUTPB = (0.1)
+    NGEN = 2000   # number of generations of evolution
+    CXPB = 0.9
+    MUTPB = 0.1
 
     rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
+    round_reached = [0, 0, 0, 0, 0, 0, 0, 0]
 
-    #3 bits for offers remaining, 3 bits for offer amount (values in [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000])
+    population = toolbox.population(n=POP_SIZE)  # initialize population
+
+    # 3 bits for offers remaining, 3 bits for offer amount (values in [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000])
     for gen in range(NGEN):
 
         if gen % 100 == 0:
             print "Generation " + str(gen)
 
+        # get data for parents
         for x in range(FLIGHTS_PER_GEN):
-            #initial number of "free tickets"
-            #new flight
-            offersLeft = random.randint(1, 7)
+            # initial number of "free tickets"
+            # new flight
+            offersLeft = random.randint(2, 7)
             roundNumber = 0
 
-            while(offersLeft > 0 and roundNumber < len(rewards)):
-                #so the first members aren't always the same
+            while offersLeft > 0 and roundNumber < len(rewards):
+                # so the first members aren't always the same
                 random.shuffle(population)
-                #goes through everyone in population to decide whether to accept or reject the reward
+                # goes through everyone in population to decide whether to accept or reject the reward
                 for member in population:
-                    [decision, offersLeft] = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
+                    offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
+
+                # keep track of how many flights reach each round
+                if offersLeft == 0 or roundNumber == len(rewards) - 1:
+                    round_reached[roundNumber] += 1
+
                 roundNumber += 1
 
-        offspring = algorithms.varAnd(population, toolbox, cxpb=CXPB, mutpb=MUTPB)
+        # evaluate parents
+        fits = toolbox.map(toolbox.evaluate, population)
+        for fit, ind in zip(fits, population):
+            ind.fitness.values = fit
+
+        # create offspring
+        offspring = toolbox.map(toolbox.clone, population)
+
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            if random.random() < CXPB:
+                toolbox.mate(child1[0], child2[0])
+                del child1.fitness.values
+                del child2.fitness.values
+
+        for mutant in offspring:
+            if random.random() < MUTPB:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
+
+        # customfunctions.resetScores(offspring)
+
+        # get data for offspring
+        for x in range(FLIGHTS_PER_GEN):
+            # initial number of "free tickets"
+            # new flight
+            offersLeft = random.randint(2, 7)
+            roundNumber = 0
+
+            while offersLeft > 0 and roundNumber < len(rewards):
+                # so the first members aren't always the same
+                random.shuffle(offspring)
+                # goes through everyone in population to decide whether to accept or reject the reward
+                for member in offspring:
+                    offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
+
+                # keep track of how many flights reach each round
+                if offersLeft == 0 or roundNumber == len(rewards) - 1:
+                    round_reached[roundNumber] += 1
+
+                roundNumber += 1
+
+        # calculate fitness of offspring
         fits = toolbox.map(toolbox.evaluate, offspring)
         for fit, ind in zip(fits, offspring):
             ind.fitness.values = fit
-        population = offspring
 
-        #if gen != (NGEN-1):
-        #    customfunctions.resetScores(population)
+        # create combined population
+        population.extend(offspring)
 
-    customfunctions.graphObjectives(population)
+        # survival of the fittest
+        population = toolbox.select(population, POP_SIZE)
+        population = toolbox.map(toolbox.clone, population)
 
-    #print output with top members
+
+    # print output with top members
     all_ind = tools.selBest(population, len(population))
     for ind in all_ind:
         print str(ind) + "\n"
+
+    print round_reached
+
+    customfunctions.graphObjectives(population)
+
 
 if __name__ == "__main__":
     main()
