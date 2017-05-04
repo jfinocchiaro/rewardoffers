@@ -14,15 +14,26 @@ rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 #     return reward, missedOpps
 
 def evaluate(member):
-    if member[1][1] > 0:
-        member[1][2] = float(member[1][0]) / member[1][1]   # calculate average accepted offer
-    return member[1][2], member[1][1], member[1][3]
+    avg_reward = 0.0
+    scaled_accept = scaled_lost = 100.0
+    if member[1][2] > 0:
+        avg_reward = float(member[1][1]) / member[1][2]             # calculate average accepted offer
+    if member[1][2] > 0:
+        scaled_accept = (float(member[1][2]) / member[1][0]) * 100  # calculate accepted scaled by flights
+    if member[1][3] > 0:
+        scaled_lost = (float(member[1][3]) / member[1][0]) * 100    # calculate lost scaled by flights
+    return avg_reward, scaled_accept, scaled_lost
 
 
 def resetScores(population):
     for member in population:
         for i in range(len(member[1])):
             member[1][i] = 0
+
+
+def memberReset(member):
+    for i in range(len(member[1])):
+        member[1][i] = 0
 
 
 # offersLeft number between 0 and 8 in decimal
@@ -85,8 +96,8 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
     decision_bit = member[0][decision_spot]
 
     if offersLeft > 0 and decision_bit == 1:
-        member[1][0] += offer   # update total reward
-        member[1][1] += 1       # increment offers accepted
+        member[1][1] += offer   # update total reward
+        member[1][2] += 1       # increment offers accepted
         offersLeft -= 1         # decrement offers remaining
     elif offersLeft == 0 and decision_bit == 1:
         member[1][3] += 1       # increment offers lost
@@ -127,9 +138,10 @@ def graphObjectives(population):
     ys = []
     zs = []
     for member in population:
-        xs.append(member[1][2])     # average reward
-        ys.append(member[1][1])     # offers accepted
-        zs.append(member[1][3])     # offers lost
+        x, y, z = evaluate(member)
+        xs.append(x)     # average reward
+        ys.append(y)     # scaled offers accepted
+        zs.append(z)     # scaled offers lost
 
     p_front = pareto_frontier(xs, ys, maxX = True, maxY = False)
 

@@ -18,7 +18,7 @@ def main():
     IND_SIZE = 64           # length of genome
     POP_SIZE = 50          # number of members in the population
     DECISION_SIZE = 3       # four decisions can be made
-    FLIGHTS_PER_GEN = 100   # number of simulations in one generation
+    FLIGHTS_PER_GEN = 250   # number of simulations in one generation
 
     toolbox = base.Toolbox()    # initialize toolbox
     toolbox.register("initZero", random.randint, 0 , 0)  # initialize to 0
@@ -27,9 +27,7 @@ def main():
     toolbox.register("decision", random.randint, 0, 3)   # create a bit 0 to 3
 
     toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)          # list of bits makes up genome
-    # toolbox.register("offerAmts", tools.initRepeat, list, toolbox.bit, DECISION_SIZE)  # list of bits makes up genome
-    # toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 2)            # list of bits makes up genome
-    # total reward, offers accepted, average accepted offer, offers lost
+    # flights, total reward, offers accepted, offers lost
     toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 4)  # list of bits makes up genome
 
     toolbox.register("individual", tools.initCycle, creator.Individual, (toolbox.genome, toolbox.scores), n=1)    # creates an individual with genome and scores
@@ -76,6 +74,10 @@ def main():
 
                 roundNumber += 1
 
+        # add flights to parents
+        for member in population:
+            member[1][0] += FLIGHTS_PER_GEN
+
         # evaluate parents
         fits = toolbox.map(toolbox.evaluate, population)
         for fit, ind in zip(fits, population):
@@ -88,14 +90,15 @@ def main():
             if random.random() < CXPB:
                 toolbox.mate(child1[0], child2[0])
                 del child1.fitness.values
+                customfunctions.memberReset(child1)
                 del child2.fitness.values
+                customfunctions.memberReset(child2)
 
         for mutant in offspring:
             if random.random() < MUTPB:
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
-
-        # customfunctions.resetScores(offspring)
+                customfunctions.memberReset(mutant)
 
         # get data for offspring
         for x in range(FLIGHTS_PER_GEN):
@@ -116,6 +119,10 @@ def main():
                     round_reached[roundNumber] += 1
 
                 roundNumber += 1
+
+        # add flights to offspring
+        for member in offspring:
+            member[1][0] += FLIGHTS_PER_GEN
 
         # calculate fitness of offspring
         fits = toolbox.map(toolbox.evaluate, offspring)
