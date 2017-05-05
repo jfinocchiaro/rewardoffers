@@ -15,7 +15,7 @@ rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 
 def evaluate(member):
     avg_reward = 0.0
-    scaled_accept = scaled_lost = 100.0
+    scaled_accept = scaled_lost = 0.0
     if member[1][2] > 0:
         avg_reward = float(member[1][1]) / member[1][2]             # calculate average accepted offer
     if member[1][2] > 0:
