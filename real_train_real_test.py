@@ -12,7 +12,7 @@ import math
 
 def main():
     # get list of real players
-    player_list = real_players.getVariedPopList()
+    # player_list = real_players.getVariedPopList()
 
     # multiobjective- maximize reward, minimize missed opportunities
     creator.create("FitnessMulti", base.Fitness, weights=(1.0, -1.0, -1.0))
@@ -24,12 +24,15 @@ def main():
     POP_SIZE = 100          # number of members in the population
     FLIGHTS_PER_GEN = 100   # number of simulations in one generation
 
+    # get list of player names (not uniform)
+    player_list = real_players.getRealMix(POP_SIZE)
+
     toolbox = base.Toolbox()                                # initialize toolbox
     toolbox.register("initZero", random.randint, 0, 0)      # create a bit 0
     # toolbox.register("bit", random.choice, init_bits)     # create a bit 0 or 1
     toolbox.register("bit", random.randint, 0, 1)           # create a bit 0 or 1
     toolbox.register("decision", random.randint, 0, 3)      # create an int 0 to 3
-    toolbox.register("name", random.choice, player_list)    # create a name from list of possible players
+    toolbox.register("name", customfunctions.get_next, player_list)    # create a name from list of possible players
 
     toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)          # list of bits makes up genome
     # flights, total reward, offers accepted, offers lost
@@ -38,7 +41,7 @@ def main():
     toolbox.register("member", tools.initCycle, creator.Individual, (toolbox.name, toolbox.scores), 1)
     toolbox.register("individual", tools.initCycle, creator.Individual,
                      (toolbox.genome, toolbox.scores), n=1)       # creates an individual with genome and scores
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual) 
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("real_pop", tools.initRepeat, list, toolbox.member)
 
     # initialize evolution methods
@@ -224,8 +227,14 @@ def main():
     del best.fitness.values                 # delete fitness values of best member
 
     # create population of real players
-    real_pop = toolbox.real_pop(n=POP_SIZE)
-    real_pop[0][0] = 'best_player'          # replace a member of real_pop with best
+    # real_pop = toolbox.real_pop(n=POP_SIZE)
+    customfunctions.resetScores(real_pop)
+
+    # put this in real_pop so that the best player will
+    # get a turn in the rotation -- but real_pop does
+    # not contain the player.  best is the player since
+    # we need to keep the genome bits for that player
+    real_pop[0][0] = 'best_player'
 
     # run a tournament for NUM_FLIGHTS flights
     for flight in range(NUM_FLIGHTS):
@@ -272,6 +281,12 @@ def main():
     fits = toolbox.map(toolbox.evaluate, real_pop)
     for fit, ind in zip(fits, real_pop):
         ind.fitness.values = fit
+
+    # evaluate the evolved player and print
+    print 'best_player'
+    o1, o2, o3 = customfunctions.evaluate(best)
+    print "{0}  {1}  {2}\n".format(o1, o2, o3)
+    print
 
     # print output with top members
     all_ind = tools.selBest(real_pop, len(real_pop))

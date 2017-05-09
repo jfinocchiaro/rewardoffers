@@ -6,6 +6,15 @@ from mpl_toolkits.mplot3d import Axes3D
 
 rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 
+
+# return element at front of list
+# add back to end of list
+def get_next(l):
+    elt =  l.pop()
+    l.append(elt)
+    return elt
+
+
 # evaluate score maximizing financial gains and minimizing missed oppotunities
 # def evaluate(member):
 #     # reward = 0

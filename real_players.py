@@ -6,6 +6,21 @@ def getVariedPopList():
     #return ['coop']
     return ['business', 'last', 'ka-ching', 'ka-ching+', 'random', 'mod10', 'mod25']
 
+
+def getRealMix(length):
+    l = []
+    for i in range(length/2):
+        l.append('business')
+    l.append('dude')
+    for i in range(length/8):
+        l.append('last')
+        l.append('ka-ching')
+        l.append('ka-ching+')
+    while len(l) < length:
+        l.append('mod25')
+    return l
+
+
 def playVariedPop(oppName, round, offers, flight):
 
     # always decline
