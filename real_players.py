@@ -12,7 +12,7 @@ def getRealMix(length):
     for i in range(length/2):
         l.append('business')
     l.append('dude')
-    for i in range(length/8):
+    for i in range(length/7):
         l.append('last')
         l.append('ka-ching')
         l.append('ka-ching+')

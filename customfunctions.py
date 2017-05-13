@@ -10,7 +10,7 @@ rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 # return element at front of list
 # add back to end of list
 def get_next(l):
-    elt =  l.pop()
+    elt = l.pop(0)
     l.append(elt)
     return elt
 
@@ -43,6 +43,11 @@ def resetScores(population):
 def memberReset(member):
     for i in range(len(member[1])):
         member[1][i] = 0
+
+
+def resetAccepts(population):
+    for member in population:
+        member[2] = 0
 
 
 # offersLeft number between 0 and 8 in decimal
@@ -107,6 +112,7 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
     if offersLeft > 0 and decision_bit == 1:
         member[1][1] += offer   # update total reward
         member[1][2] += 1       # increment offers accepted
+        member[2] = 1
         offersLeft -= 1         # decrement offers remaining
     elif offersLeft == 0 and decision_bit == 1:
         member[1][3] += 1       # increment offers lost
