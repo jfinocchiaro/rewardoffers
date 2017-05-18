@@ -112,7 +112,7 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
     if offersLeft > 0 and decision_bit == 1:
         member[1][1] += offer   # update total reward
         member[1][2] += 1       # increment offers accepted
-        member[2] = 1
+        #member[2] = 1
         offersLeft -= 1         # decrement offers remaining
     elif offersLeft == 0 and decision_bit == 1:
         member[1][3] += 1       # increment offers lost
