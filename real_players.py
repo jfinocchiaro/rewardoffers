@@ -2,6 +2,18 @@ import random
 
 rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 
+# real member types:
+#
+# business:   never accept
+# dude:       always accept
+# last:       accept last available offer
+# ka-ching:   accept if 5th round or higher
+# ka-ching+:  accept if last round
+# mod25:      accept if flight count % 25 == 0
+# rand-ching-low: accept at random -- prob increases with amount - max prob = 0.5
+# rand-ching-high: accept at random - prob increases with amount - max prob = 1
+
+
 def getVariedPopList():
     #return ['coop']
     return ['business', 'last', 'ka-ching', 'ka-ching+', 'random', 'mod10', 'mod25']
@@ -12,12 +24,13 @@ def getRealMix(length):
     for i in range(length/2):
         l.append('business')
     l.append('dude')
-    for i in range(length/7):
+    l.append('dude')
+    while len(l) + 3 <= length:
         l.append('last')
-        l.append('ka-ching')
-        l.append('ka-ching+')
+        l.append('rand-ching-low')
+        l.append('rand-ching-high')
     while len(l) < length:
-        l.append('mod25')
+        l.append('last2')
     return l
 
 
@@ -84,9 +97,21 @@ def playVariedPop(oppName, round, offers, flight):
         else:
             decision2 = 0
 
+    elif oppName == 'rand-ching-low':
+        if random.randint(0, 20000) < rewards[round]:
+            decision2 = 1
+        else:
+            decision2 = 0
+
+    elif oppName == 'rand-ching-high':
+        if random.randint(0, 10000) < rewards[round]:
+            decision2 = 1
+        else:
+            decision2 = 0
+
     # else
     else:
-        print "Error invalid Axelrod player"
+        print "Error invalid Real player"
         decision2 = -1
 
     return decision2
