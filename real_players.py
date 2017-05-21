@@ -15,7 +15,6 @@ rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 
 
 def getVariedPopList():
-    #return ['coop']
     return ['business', 'last', 'ka-ching', 'ka-ching+', 'random', 'mod10', 'mod25']
 
 
@@ -111,8 +110,7 @@ def playVariedPop(oppName, round, offers, flight):
 
     # else
     else:
-        print "Error invalid Real player"
+        print "Error invalid varied player"
         decision2 = -1
 
     return decision2
-

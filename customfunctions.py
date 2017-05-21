@@ -114,6 +114,7 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
         member[1][2] += 1       # increment offers accepted
         member[2] = 1           # set bit indicating offer accepted
         offersLeft -= 1         # decrement offers remaining
+
     elif offersLeft == 0 and decision_bit == 1:
         member[1][3] += 1       # increment offers lost
 
