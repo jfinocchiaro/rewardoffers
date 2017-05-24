@@ -24,14 +24,19 @@ def get_next(l):
 
 def evaluate(member):
     avg_reward = 0.0
-    scaled_accept = scaled_lost = 0.0
+    scaled_accept = scaled_lost = success_rate = 0.0
     if member[1][2] > 0:
         avg_reward = float(member[1][1]) / member[1][2]             # calculate average accepted offer
+    '''
     if member[1][2] > 0:
         scaled_accept = (float(member[1][2]) / member[1][0]) * 100  # calculate accepted scaled by flights
     if member[1][3] > 0:
         scaled_lost = (float(member[1][3]) / member[1][0]) * 100    # calculate lost scaled by flights
-    return avg_reward, scaled_accept, scaled_lost
+    '''
+    if member[1][4] > 0:
+        success_rate = (float(member[1][2]) / member[1][4])
+    # return avg_reward, scaled_accept, scaled_lost, success_rate
+    return avg_reward, success_rate
 
 
 def resetScores(population):
@@ -114,9 +119,11 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
         member[1][2] += 1       # increment offers accepted
         member[2] = 1           # set bit indicating offer accepted
         offersLeft -= 1         # decrement offers remaining
+        member[1][4] += 1       # increment attempts
 
     elif offersLeft == 0 and decision_bit == 1:
         member[1][3] += 1       # increment offers lost
+        member[1][4] += 1       # increment attempts
 
     return offersLeft
 

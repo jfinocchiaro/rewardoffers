@@ -14,9 +14,14 @@ def main():
     # get list of real players
     # player_list = real_players.getVariedPopList()
 
-    # multiobjective- maximize reward, minimize missed opportunities
-    creator.create("FitnessMulti", base.Fitness, weights=(1.0, -1.0, -1.0))
+    # multiobjective:
+    #                   maximize avg reward,
+    #             XX      minimize offers accepted/flights,
+    #             XX      minimize missed opportunities/flights,
+    #                   maximize success rate (successes/attempts)
+    creator.create("FitnessMulti", base.Fitness, weights=(1.0, 1.0))
     # creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+
     creator.create("Individual", list, fitness=creator.FitnessMulti)
     # creator.create("Member", list, fitness=creator.FitnessMulti)
 
@@ -28,16 +33,17 @@ def main():
     # get list of player names (not uniform)
     player_list = real_players.getRealMix(POP_SIZE)
 
-    toolbox = base.Toolbox()                                # initialize toolbox
-    toolbox.register("initZero", random.randint, 0, 0)      # create a bit 0
-    # toolbox.register("bit", random.choice, init_bits)     # create a bit 0 or 1
-    toolbox.register("bit", random.randint, 0, 1)           # create a bit 0 or 1
-    toolbox.register("decision", random.randint, 0, 3)      # create an int 0 to 3
-    toolbox.register("name", customfunctions.get_next, player_list)    # create a name from list of possible players
+    toolbox = base.Toolbox()                                            # initialize toolbox
+    toolbox.register("initZero", random.randint, 0, 0)                  # create a bit 0
+    # toolbox.register("bit", random.choice, init_bits)                 # create a bit 0 or 1
+    toolbox.register("bit", random.randint, 0, 1)                       # create a bit 0 or 1
+    toolbox.register("decision", random.randint, 0, 3)                  # create an int 0 to 3
+    toolbox.register("name", customfunctions.get_next, player_list)     # get "name" from player list
 
-    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)          # list of bits makes up genome
-    # flights, total reward, offers accepted, offers lost
-    toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 4)  # list of bits makes up genome
+    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)   # list of bits makes up genome
+
+    # flights, total reward, offers accepted, offers lost, attempts made
+    toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 5)     # list of bits makes up genome
 
     # member is used in the real population
     # name: member type, scores: as defined above, initZero: bit indicating if an offer accepted this flight
@@ -96,9 +102,11 @@ def main():
                                 offersLeft -= 2
                                 real_member[1][1] += 2 * rewards[roundNumber]
                                 real_member[1][2] += 2
+                                real_member[1][4] += 2
                                 real_member[2] = 1
                             elif decision == 1 and offersLeft < 2:
                                 real_member[1][3] += 2
+                                real_member[1][4] += 2
                     else:
                         if real_member[2] == 0:
                             decision = real_players.playVariedPop(real_member[0], roundNumber, offersLeft, flight)
@@ -106,9 +114,11 @@ def main():
                                 offersLeft -= 1
                                 real_member[1][1] += rewards[roundNumber]
                                 real_member[1][2] += 1
+                                real_member[1][4] += 1
                                 real_member[2] = 1
                             elif decision == 1 and offersLeft == 0:
                                 real_member[1][3] += 1
+                                real_member[1][4] += 1
 
                     i += 1
 
@@ -189,9 +199,11 @@ def main():
                                     offersLeft -= 2
                                     real_member[1][1] += 2 * rewards[roundNumber]
                                     real_member[1][2] += 2
+                                    real_member[1][4] += 2
                                     real_member[2] = 1
                                 elif decision == 1 and offersLeft < 2:
                                     real_member[1][3] += 2
+                                    real_member[1][4] += 2
                         else:
                             if real_member[2] == 0:
                                 decision = real_players.playVariedPop(real_member[0], roundNumber, offersLeft, flight)
@@ -199,9 +211,11 @@ def main():
                                     offersLeft -= 1
                                     real_member[1][1] += rewards[roundNumber]
                                     real_member[1][2] += 1
+                                    real_member[1][4] += 1
                                     real_member[2] = 1
                                 elif decision == 1 and offersLeft == 0:
                                     real_member[1][3] += 1
+                                    real_member[1][4] += 1
 
                         i += 1
 
@@ -233,8 +247,10 @@ def main():
     all_ind = tools.selBest(evolving_pop, len(evolving_pop))
     for ind in all_ind:
         print str(ind)
-        o1, o2, o3 = customfunctions.evaluate(ind)
-        print "{0}  {1}  {2}\n".format(o1, o2, o3)
+        # o1, o2, o3, o4 = customfunctions.evaluate(ind)
+        o1, o2 = customfunctions.evaluate(ind)
+        # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
+        print "{0}  {1}\n".format(o1, o2)
 
     # print round_reached
 
@@ -244,7 +260,7 @@ def main():
     # now compete best member of evolved population against "real players"
     print
     print "Best player vs population of real players: \n"
-    NUM_FLIGHTS = 5000
+    NUM_FLIGHTS = 10000
     # reset round_reached for testing phase
     round_reached = [0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -287,9 +303,11 @@ def main():
                             offersLeft -= 2
                             member[1][1] += 2*rewards[roundNumber]
                             member[1][2] += 2
+                            member[1][4] += 2
                             member[2] = 1
                         elif decision == 1 and offersLeft < 2:
                             member[1][3] += 2
+                            member[1][4] += 2
                 else:
                     if member[2] == 0:
                         decision = real_players.playVariedPop(member[0], roundNumber, offersLeft, flight)
@@ -297,9 +315,11 @@ def main():
                             offersLeft -= 1
                             member[1][1] += rewards[roundNumber]
                             member[1][2] += 1
+                            member[1][4] += 1
                             member[2] = 1
                         elif decision == 1 and offersLeft == 0:
                             member[1][3] += 1
+                            member[1][4] += 1
 
             # keep track of how many flights reach each round
             if offersLeft == 0 or roundNumber == len(rewards) - 1:
@@ -324,16 +344,20 @@ def main():
 
     # evaluate the evolved player and print
     print "['best_player', {0}]".format(best[1])
-    o1, o2, o3 = customfunctions.evaluate(best)
-    print "{0}  {1}  {2}\n".format(o1, o2, o3)
+    # o1, o2, o3, o4 = customfunctions.evaluate(ind)
+    o1, o2 = customfunctions.evaluate(best)
+    # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
+    print "{0}  {1}\n".format(o1, o2)
     print
 
     # print output with top members
     all_ind = tools.selBest(real_pop, len(real_pop))
     for ind in all_ind:
         print str(ind)
-        o1, o2, o3 = customfunctions.evaluate(ind)
-        print "{0}  {1}  {2}\n".format(o1, o2, o3)
+        # o1, o2, o3, o4 = customfunctions.evaluate(ind)
+        o1, o2 = customfunctions.evaluate(ind)
+        # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
+        print "{0}  {1}\n".format(o1, o2)
 
     print round_reached
 
