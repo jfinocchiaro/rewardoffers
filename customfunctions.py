@@ -3,6 +3,7 @@ from deap import tools, base, creator, algorithms
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import real_players
 
 rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 
@@ -126,6 +127,36 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
         member[1][4] += 1       # increment attempts
 
     return offersLeft
+
+
+# determine and process decision for a member of real_population
+# return the number of offers remaining after processing the decision
+def getRealPlayerDecision(real_member, round_num, offers_left, flt):
+    if real_member[0] == 'couple':
+        if real_member[2] == 0:
+            decision = real_players.playVariedPop('couple', round_num, offers_left, flt)
+            if decision == 1 and offers_left >= 2 and real_member[2] == 0:
+                offers_left -= 2
+                real_member[1][1] += 2 * rewards[round_num]
+                real_member[1][2] += 2
+                real_member[1][4] += 2
+                real_member[2] = 1
+            elif decision == 1 and offers_left < 2:
+                real_member[1][3] += 2
+                real_member[1][4] += 2
+    else:
+        if real_member[2] == 0:
+            decision = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
+            if decision == 1 and offers_left >= 1 and real_member[2] == 0:
+                offers_left -= 1
+                real_member[1][1] += rewards[round_num]
+                real_member[1][2] += 1
+                real_member[1][4] += 1
+                real_member[2] = 1
+            elif decision == 1 and offers_left == 0:
+                real_member[1][3] += 1
+                real_member[1][4] += 1
+    return offers_left
 
 
 def mutateFlipBit(individual, indpb=0.015):

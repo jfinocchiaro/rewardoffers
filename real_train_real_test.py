@@ -35,7 +35,6 @@ def main():
 
     toolbox = base.Toolbox()                                            # initialize toolbox
     toolbox.register("initZero", random.randint, 0, 0)                  # create a bit 0
-    # toolbox.register("bit", random.choice, init_bits)                 # create a bit 0 or 1
     toolbox.register("bit", random.randint, 0, 1)                       # create a bit 0 or 1
     toolbox.register("decision", random.randint, 0, 3)                  # create an int 0 to 3
     toolbox.register("name", customfunctions.get_next, player_list)     # get "name" from player list
@@ -48,10 +47,12 @@ def main():
     # member is used in the real population
     # name: member type, scores: as defined above, initZero: bit indicating if an offer accepted this flight
     toolbox.register("member", tools.initCycle, creator.Individual, (toolbox.name, toolbox.scores, toolbox.initZero), 1)
+
     # individual is used in evolving population
     # genome: decision bits, scores: as defined above, initZero: biti indicating if an offer accepted this flight
     toolbox.register("individual", tools.initCycle, creator.Individual,
-                     (toolbox.genome, toolbox.scores, toolbox.initZero), n=1)
+                                                    (toolbox.genome, toolbox.scores, toolbox.initZero), n=1)
+
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("real_pop", tools.initRepeat, list, toolbox.member)
 
@@ -93,32 +94,13 @@ def main():
                 # goes through everyone in population to decide whether to accept or reject the reward
                 i = 0
                 for real_member in real_pop:
-                    if member_turn == i and member[2] == 0:
-                        offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
-                    if real_member[0] == 'couple':
-                        if real_member[2] == 0:
-                            decision = real_players.playVariedPop('couple', roundNumber, offersLeft, flight)
-                            if decision == 1 and offersLeft >= 2 and real_member[2] == 0:
-                                offersLeft -= 2
-                                real_member[1][1] += 2 * rewards[roundNumber]
-                                real_member[1][2] += 2
-                                real_member[1][4] += 2
-                                real_member[2] = 1
-                            elif decision == 1 and offersLeft < 2:
-                                real_member[1][3] += 2
-                                real_member[1][4] += 2
+                    if member_turn == i:
+                        # this is the evolving member
+                        if member[2] == 0:
+                            offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
                     else:
-                        if real_member[2] == 0:
-                            decision = real_players.playVariedPop(real_member[0], roundNumber, offersLeft, flight)
-                            if decision == 1 and offersLeft >= 1 and real_member[2] == 0:
-                                offersLeft -= 1
-                                real_member[1][1] += rewards[roundNumber]
-                                real_member[1][2] += 1
-                                real_member[1][4] += 1
-                                real_member[2] = 1
-                            elif decision == 1 and offersLeft == 0:
-                                real_member[1][3] += 1
-                                real_member[1][4] += 1
+                        offersLeft = customfunctions.getRealPlayerDecision(real_member, roundNumber,
+                                                                                        offersLeft, flight)
 
                     i += 1
 
@@ -189,33 +171,13 @@ def main():
                     i = 0
                     for real_member in real_pop:
                         # if it's the evolving member's turn and they haven't already accepted an offer this flight
-                        if member_turn == i and member[2] == 0:
-                            offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
-                        if real_member[0] == 'couple':
-                            # if this member hasn't already accepted an offer for this flight
-                            if real_member[2] == 0:
-                                decision = real_players.playVariedPop('couple', roundNumber, offersLeft, flight)
-                                if decision == 1 and offersLeft >= 2:
-                                    offersLeft -= 2
-                                    real_member[1][1] += 2 * rewards[roundNumber]
-                                    real_member[1][2] += 2
-                                    real_member[1][4] += 2
-                                    real_member[2] = 1
-                                elif decision == 1 and offersLeft < 2:
-                                    real_member[1][3] += 2
-                                    real_member[1][4] += 2
+                        if member_turn == i:
+                            # this is the evolving individual
+                            if member[2] == 0:
+                                offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
                         else:
-                            if real_member[2] == 0:
-                                decision = real_players.playVariedPop(real_member[0], roundNumber, offersLeft, flight)
-                                if decision == 1 and offersLeft >= 1 and real_member[2] == 0:
-                                    offersLeft -= 1
-                                    real_member[1][1] += rewards[roundNumber]
-                                    real_member[1][2] += 1
-                                    real_member[1][4] += 1
-                                    real_member[2] = 1
-                                elif decision == 1 and offersLeft == 0:
-                                    real_member[1][3] += 1
-                                    real_member[1][4] += 1
+                            offersLeft = customfunctions.getRealPlayerDecision(real_member, roundNumber,
+                                                                                            offersLeft, flight)
 
                         i += 1
 
@@ -292,34 +254,14 @@ def main():
             # goes through everyone in population to decide whether to accept or reject the reward
             for member in real_pop:
                 if member[0] == 'best_player':
+                    # if member hasn't already accepted an offer
                     if best[2] == 0:
                         offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, best)
+                        # copy scores from best player to best player's placeholder in real_pop
                         for i in range(len(member[1])):
                             member[1][i] = best[1][i]
-                elif member[0] == 'couple':
-                    if member[2] == 0:
-                        decision = real_players.playVariedPop('couple', roundNumber, offersLeft, flight)
-                        if decision == 1 and offersLeft >= 2:
-                            offersLeft -= 2
-                            member[1][1] += 2*rewards[roundNumber]
-                            member[1][2] += 2
-                            member[1][4] += 2
-                            member[2] = 1
-                        elif decision == 1 and offersLeft < 2:
-                            member[1][3] += 2
-                            member[1][4] += 2
                 else:
-                    if member[2] == 0:
-                        decision = real_players.playVariedPop(member[0], roundNumber, offersLeft, flight)
-                        if decision == 1 and offersLeft >= 1 and member[2] == 0:
-                            offersLeft -= 1
-                            member[1][1] += rewards[roundNumber]
-                            member[1][2] += 1
-                            member[1][4] += 1
-                            member[2] = 1
-                        elif decision == 1 and offersLeft == 0:
-                            member[1][3] += 1
-                            member[1][4] += 1
+                    offersLeft = customfunctions.getRealPlayerDecision(member, roundNumber, offersLeft, flight)
 
             # keep track of how many flights reach each round
             if offersLeft == 0 or roundNumber == len(rewards) - 1:

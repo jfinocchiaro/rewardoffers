@@ -14,6 +14,7 @@ rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
 # rand-ching-high: accept at random - prob increases with amount - max prob = 1
 
 
+# not currently being used
 def getVariedPopList():
     return ['business', 'last', 'ka-ching', 'ka-ching+', 'random', 'mod10', 'mod25']
 
