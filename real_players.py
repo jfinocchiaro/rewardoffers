@@ -21,16 +21,19 @@ def getVariedPopList():
 
 def getRealMix(length):
     l = []
-    for i in range(length/2):
+    # about 12% of passengers, on average, are business travelers
+    business_num = int(random.gauss(0.15, 0.06) * length)
+    for i in range(business_num):
         l.append('business')
     l.append('dude')
     l.append('dude')
-    while len(l) + 3 <= length:
+    num_left = length - len(l)
+    for i in range(int(random.gauss(0.25, 0.08) * num_left)):
         l.append('last')
+    for i in range(int(random.gauss(0.45, 0.08) * num_left)):
         l.append('rand-ching-low')
+    for i in range(length - len(l)):
         l.append('rand-ching-high')
-    while len(l) < length:
-        l.append('last2')
     return l
 
 
@@ -98,12 +101,14 @@ def playVariedPop(oppName, round, offers, flight):
             decision2 = 0
 
     elif oppName == 'rand-ching-low':
+        # if random.randint(0, 15) < round + 1:
         if random.randint(0, 20000) < rewards[round]:
             decision2 = 1
         else:
             decision2 = 0
 
     elif oppName == 'rand-ching-high':
+        # if random.randint(0, 7) < round + 1:
         if random.randint(0, 10000) < rewards[round]:
             decision2 = 1
         else:

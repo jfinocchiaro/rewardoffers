@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from deap import tools, base, creator, algorithms
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import real_players
 
-rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
+from deap import tools, base, creator, algorithms
+import real_players
+from globals import index, rewards
 
 
 # return element at front of list
@@ -26,34 +26,40 @@ def get_next(l):
 def evaluate(member):
     avg_reward = 0.0
     scaled_accept = scaled_lost = success_rate = 0.0
-    if member[1][2] > 0:
-        avg_reward = float(member[1][1]) / member[1][2]             # calculate average accepted offer
+    if member[index.scores][index.offers_accept] > 0:
+        # calculate average accepted offer
+        avg_reward = float(member[index.scores][index.reward_total]) / member[index.scores][index.offers_accept]
     '''
     if member[1][2] > 0:
         scaled_accept = (float(member[1][2]) / member[1][0]) * 100  # calculate accepted scaled by flights
     if member[1][3] > 0:
         scaled_lost = (float(member[1][3]) / member[1][0]) * 100    # calculate lost scaled by flights
     '''
-    if member[1][4] > 0:
-        success_rate = (float(member[1][2]) / member[1][4])
+    if member[index.scores][index.attempts] > 0:
+        success_rate = (float(member[index.scores][index.offers_accept]) / member[index.scores][index.attempts])
     # return avg_reward, scaled_accept, scaled_lost, success_rate
     return avg_reward, success_rate
 
 
 def resetScores(population):
     for member in population:
-        for i in range(len(member[1])):
-            member[1][i] = 0
+        for i in range(len(member[index.scores])):
+            member[index.scores][i] = 0
 
 
 def memberReset(member):
-    for i in range(len(member[1])):
-        member[1][i] = 0
+    for i in range(len(member[index.scores])):
+        member[index.scores][i] = 0
 
 
 def resetAccepts(population):
     for member in population:
-        member[2] = 0
+        member[index.already] = 0
+
+
+def resetDecisions(population):
+    for member in population:
+        member[index.decision] = 0
 
 
 # offersLeft number between 0 and 8 in decimal
@@ -113,54 +119,100 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
     decision_spot = roundBin + offersLeftBin
 
     decision_spot = int(decision_spot, 2)
-    decision_bit = member[0][decision_spot]
+    decision_bit = member[index.genome][decision_spot]
 
     if offersLeft > 0 and decision_bit == 1:
-        member[1][1] += offer   # update total reward
-        member[1][2] += 1       # increment offers accepted
-        member[2] = 1           # set bit indicating offer accepted
-        offersLeft -= 1         # decrement offers remaining
-        member[1][4] += 1       # increment attempts
+        member[index.scores][index.reward_total] += offer       # update total reward
+        member[index.scores][index.offers_accept] += 1          # increment offers accepted
+        member[index.already] = 1                               # set bit indicating offer accepted
+        offersLeft -= 1                                         # decrement offers remaining
+        member[index.scores][index.attempts] += 1               # increment attempts
 
     elif offersLeft == 0 and decision_bit == 1:
-        member[1][3] += 1       # increment offers lost
-        member[1][4] += 1       # increment attempts
+        member[index.scores][index.offers_lost] += 1            # increment offers lost
+        member[index.scores][index.attempts] += 1               # increment attempts
 
     return offersLeft
 
 
-# determine and process decision for a member of real_population
-# return the number of offers remaining after processing the decision
+# determine and set decision for an evolving member
+def getDecisionBinary(offersLeft, roundNumber, member):
+
+    roundBin = format(roundNumber, 'b').zfill(3)
+    offersLeftBin = format(offersLeft, 'b').zfill(3)
+
+    decision_spot = roundBin + offersLeftBin
+    decision_spot = int(decision_spot, 2)
+
+    member[index.decision] = member[index.genome][decision_spot]
+
+
+# apply the decision of a member
+# assumes that the decision bit is 1
+def applyDecisionBinary(offersLeft, roundNumber, member):
+
+    # offer stored in rewards
+    offer = rewards[roundNumber]
+
+    if offersLeft > 0:
+        member[index.scores][index.reward_total] += offer       # update total reward
+        member[index.scores][index.offers_accept] += 1          # increment offers accepted
+        member[index.already] = 1                               # set bit indicating offer accepted
+        offersLeft -= 1                                         # decrement offers remaining
+        member[index.scores][index.attempts] += 1               # increment attempts
+
+    elif offersLeft == 0:
+        member[index.scores][index.offers_lost] += 1            # increment offers lost
+        member[index.scores][index.attempts] += 1               # increment attempts
+
+    return offersLeft
+
+
+# # determine and process decision for a member of real_population
+# # return the number of offers remaining after processing the decision
+# def getRealPlayerDecision(real_member, round_num, offers_left, flt):
+#     if real_member[0] == 'couple':
+#         if real_member[index.already] == 0:
+#             decision = real_players.playVariedPop('couple', round_num, offers_left, flt)
+#             if decision == 1 and offers_left >= 2:
+#                 offers_left -= 2
+#                 real_member[index.scores][index.reward_total] += 2 * rewards[round_num]
+#                 real_member[index.scores][index.offers_accept] += 2
+#                 real_member[index.scores][index.attempts] += 2
+#                 real_member[index.already] = 1
+#             elif decision == 1 and offers_left < 2:
+#                 real_member[index.scores][index.offers_lost] += 2
+#                 real_member[index.scores][index.attempts] += 2
+#     else:
+#         if real_member[index.already] == 0:
+#             decision = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
+#             if decision == 1 and offers_left >= 1:
+#                 offers_left -= 1
+#                 real_member[index.scores][index.reward_total] += rewards[round_num]
+#                 real_member[index.scores][index.offers_accept] += 1
+#                 real_member[index.scores][index.attempts] += 1
+#                 real_member[index.already] = 1
+#             elif decision == 1 and offers_left == 0:
+#                 real_member[index.scores][index.offers_lost] += 1
+#                 real_member[index.scores][index.attempts] += 1
+#     return offers_left
+
+
+# determine and set decision for a member of real_population
 def getRealPlayerDecision(real_member, round_num, offers_left, flt):
+    # default value
+    decision = 0
+
     if real_member[0] == 'couple':
-        if real_member[2] == 0:
-            decision = real_players.playVariedPop('couple', round_num, offers_left, flt)
-            if decision == 1 and offers_left >= 2 and real_member[2] == 0:
-                offers_left -= 2
-                real_member[1][1] += 2 * rewards[round_num]
-                real_member[1][2] += 2
-                real_member[1][4] += 2
-                real_member[2] = 1
-            elif decision == 1 and offers_left < 2:
-                real_member[1][3] += 2
-                real_member[1][4] += 2
+        if real_member[index.already] == 0:
+            real_member[index.decision] = real_players.playVariedPop('couple', round_num, offers_left, flt)
     else:
-        if real_member[2] == 0:
-            decision = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
-            if decision == 1 and offers_left >= 1 and real_member[2] == 0:
-                offers_left -= 1
-                real_member[1][1] += rewards[round_num]
-                real_member[1][2] += 1
-                real_member[1][4] += 1
-                real_member[2] = 1
-            elif decision == 1 and offers_left == 0:
-                real_member[1][3] += 1
-                real_member[1][4] += 1
-    return offers_left
+        if real_member[index.already] == 0:
+            real_member[index.decision] = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
 
 
 def mutateFlipBit(individual, indpb=0.015):
-    genome = individual[0]
+    genome = individual[index.genome]
     #print genome
     genome = tools.mutFlipBit(genome, indpb)[0]
     #print genome
