@@ -102,14 +102,14 @@ def playVariedPop(oppName, round, offers, flight):
 
     elif oppName == 'rand-ching-low':
         # if random.randint(0, 15) < round + 1:
-        if random.randint(0, 20000) < rewards[round]:
+        if random.randint(0, 40000) < rewards[round]:
             decision2 = 1
         else:
             decision2 = 0
 
     elif oppName == 'rand-ching-high':
         # if random.randint(0, 7) < round + 1:
-        if random.randint(0, 10000) < rewards[round]:
+        if random.randint(0, 20000) < rewards[round]:
             decision2 = 1
         else:
             decision2 = 0

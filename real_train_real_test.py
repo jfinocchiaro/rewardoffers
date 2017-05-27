@@ -279,11 +279,13 @@ def main():
         roundNumber = 0
 
         while offersLeft > 0 and roundNumber < len(rewards):
-            # determine decision for evolving member
-            customfunctions.getDecisionBinary(offersLeft, roundNumber, best)
-            # determine decisinos for real members
+            # determine decisions
             for real_member in real_pop:
-                customfunctions.getRealPlayerDecision(real_member, roundNumber, offersLeft, flight)
+                if real_member[index.type] == 'best_player':
+                    customfunctions.getDecisionBinary(offersLeft, roundNumber, best)
+                else:
+                    customfunctions.getRealPlayerDecision(real_member, roundNumber, offersLeft, flight)
+
             # so the first members aren't always the same
             random.shuffle(real_pop)
             # goes through everyone in population to decide whether to accept or reject the reward
