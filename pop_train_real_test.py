@@ -1,40 +1,69 @@
 import numpy as np
 import random
-from deap import tools, base, creator, algorithms
-import customfunctions
-import real_players
 import itertools
 import math
 
+from deap import tools, base, creator, algorithms
+import customfunctions
+import real_players
+from globals import index as i, rewards
+
+
 def main():
     # get list of real players
-    player_list = real_players.getVariedPopList()
+    # player_list = real_players.getVariedPopList()
 
-    # multiobjective- maximize reward, minimize missed opportunities
-    creator.create("FitnessMulti", base.Fitness, weights=(1.0, -1.0, -1.0))
+    # multiobjective:
+    #                   maximize avg reward,
+    #             XX      minimize offers accepted/flights,
+    #             XX      minimize missed opportunities/flights,
+    #                   maximize success rate (successes/attempts)
+    creator.create("FitnessMulti", base.Fitness, weights=(1.0, 1.0))
     # creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+
     creator.create("Individual", list, fitness=creator.FitnessMulti)
     # creator.create("Member", list, fitness=creator.FitnessMulti)
 
     IND_SIZE = 64           # length of genome
     POP_SIZE = 100          # number of members in the population
+    EVOLVE_POP_SIZE = 100    # number of members of evolving population
     FLIGHTS_PER_GEN = 100   # number of simulations in one generation
 
-    toolbox = base.Toolbox()                                # initialize toolbox
-    toolbox.register("initZero", random.randint, 0, 0)      # create a bit 0
-    # toolbox.register("bit", random.choice, init_bits)     # create a bit 0 or 1
-    toolbox.register("bit", random.randint, 0, 1)           # create a bit 0 or 1
-    toolbox.register("decision", random.randint, 0, 3)      # create an int 0 to 3
-    toolbox.register("name", random.choice, player_list)    # create a name from list of possible players
+    # get list of player names (not uniform)
+    player_list = real_players.getRealMix(POP_SIZE)
 
-    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)          # list of bits makes up genome
-    # flights, total reward, offers accepted, offers lost
-    toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 4)  # list of bits makes up genome
+    toolbox = base.Toolbox()                                            # initialize toolbox
+    toolbox.register("initZero", random.randint, 0, 0)                  # create a bit 0
+    toolbox.register("bit", random.randint, 0, 1)                       # create a bit 0 or 1
+    toolbox.register("decision", random.randint, 0, 3)                  # create an int 0 to 3
+    toolbox.register("type", customfunctions.get_next, player_list)     # get type from player list
 
-    toolbox.register("member", tools.initCycle, creator.Individual, (toolbox.name, toolbox.scores), 1)
+    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)   # list of bits makes up genome
+
+    # number of flights
+    # total of rewards
+    # number of offers accepted
+    # number of offers lost
+    # number of attempts to accept an offer
+    toolbox.register("scores", tools.initRepeat, list, toolbox.initZero, 5)     # list of bits makes up genome
+
+    # member is used in the real population
+    # name: member type
+    # scores: as defined above
+    # initZero: bit indicating if an offer accepted this flight
+    # initZero: decision this round
+    toolbox.register("member", tools.initCycle, creator.Individual,
+                                    (toolbox.type, toolbox.scores, toolbox.initZero, toolbox.initZero), n=1)
+
+    # individual is used in evolving population
+    # genome: decision bits
+    # scores: as defined above
+    # initZero: bit indicating if an offer accepted this flight
+    # initZero: decision this round
     toolbox.register("individual", tools.initCycle, creator.Individual,
-                     (toolbox.genome, toolbox.scores), n=1)       # creates an individual with genome and scores
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)  # list of individuals makes up population
+                                    (toolbox.genome, toolbox.scores, toolbox.initZero, toolbox.initZero), n=1)
+
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("real_pop", tools.initRepeat, list, toolbox.member)
 
     # initialize evolution methods
@@ -43,30 +72,39 @@ def main():
     toolbox.register("mutate", customfunctions.mutateFlipBit, indpb=0.015)
     toolbox.register("select", tools.selNSGA2)
 
-    NGEN = 2000             # number of generations of evolution
+    NGEN = 5000             # number of generations of evolution
     CXPB = 0.9              # crossover probability
     MUTPB = 0.1             # mutation probability
 
-    rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
-    round_reached = [0, 0, 0, 0, 0, 0, 0, 0]
+    round_reached = [0] * len(rewards)
 
     #
-    # create first population and run through flights to create scores
-    population = toolbox.population(n=POP_SIZE)  # initialize population
+    # create the population of members to be trained
+    evolving_pop = toolbox.population(n=EVOLVE_POP_SIZE)  # initialize population
+
+    # create the population of real members to train against
+    real_pop = toolbox.real_pop(n=POP_SIZE)
 
     # get data for parents
-    for x in range(FLIGHTS_PER_GEN):
+    for flight in range(FLIGHTS_PER_GEN):
         # initial number of "free tickets"
         # new flight
         offersLeft = random.randint(2, 7)
         roundNumber = 0
 
         while offersLeft > 0 and roundNumber < len(rewards):
+            # determine decisions
+            for ind in evolving_pop:
+                customfunctions.getDecisionBinary(offersLeft, roundNumber, ind)
             # so the first members aren't always the same
-            random.shuffle(population)
+            random.shuffle(evolving_pop)
+
             # goes through everyone in population to decide whether to accept or reject the reward
-            for member in population:
-                offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
+            for ind in evolving_pop:
+                if ind[i.already] == 0 and ind[i.decision] == 1:
+                    offersLeft = customfunctions.applyDecisionBinary(offersLeft, roundNumber, ind)
+                # reset decision
+                ind[i.decision] = 0
 
             # keep track of how many flights reach each round
             if offersLeft == 0 or roundNumber == len(rewards) - 1:
@@ -74,13 +112,16 @@ def main():
 
             roundNumber += 1
 
+        # reset the accepted offer flags for next flight
+        customfunctions.resetAccepts(evolving_pop)
+
     # add flights to parents
-    for member in population:
-        member[1][0] += FLIGHTS_PER_GEN
+    for ind in evolving_pop:
+        ind[i.scores][i.flights] += FLIGHTS_PER_GEN
 
     # evaluate parents
-    fits = toolbox.map(toolbox.evaluate, population)
-    for fit, ind in zip(fits, population):
+    fits = toolbox.map(toolbox.evaluate, evolving_pop)
+    for fit, ind in zip(fits, evolving_pop):
         ind.fitness.values = fit
 
     #
@@ -91,7 +132,7 @@ def main():
             print "Generation " + str(gen)
 
         # create offspring
-        offspring = toolbox.map(toolbox.clone, population)
+        offspring = toolbox.map(toolbox.clone, evolving_pop)
 
         # crossover
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
@@ -110,22 +151,29 @@ def main():
                 # customfunctions.memberReset(mutant)
 
         # create combined population
-        population.extend(offspring)
-        population = toolbox.map(toolbox.clone, population)
+        evolving_pop.extend(offspring)
+        evolving_pop = toolbox.map(toolbox.clone, evolving_pop)
 
         # flights for combined population
-        for x in range(FLIGHTS_PER_GEN):
+        for flight in range(FLIGHTS_PER_GEN):
             # initial number of "free tickets"
             # new flight
             offersLeft = random.randint(2, 7)
             roundNumber = 0
 
             while offersLeft > 0 and roundNumber < len(rewards):
+                # determine decisions
+                for ind in evolving_pop:
+                    customfunctions.getDecisionBinary(offersLeft, roundNumber, ind)
                 # so the first members aren't always the same
-                random.shuffle(population)
+                random.shuffle(evolving_pop)
+
                 # goes through everyone in population to decide whether to accept or reject the reward
-                for member in population:
-                    offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, member)
+                for ind in evolving_pop:
+                    if ind[i.already] == 0 and ind[i.decision] == 1:
+                        offersLeft = customfunctions.applyDecisionBinary(offersLeft, roundNumber, ind)
+                    # reset decision
+                    ind[i.decision] = 0
 
                 # keep track of how many flights reach each round
                 if offersLeft == 0 or roundNumber == len(rewards) - 1:
@@ -133,77 +181,101 @@ def main():
 
                 roundNumber += 1
 
-        # add flights to offspring
-        for member in population:
-            member[1][0] += FLIGHTS_PER_GEN
+            # reset the accepted offer flags for next flight
+            customfunctions.resetAccepts(evolving_pop)
 
-        # calculate fitness of population
-        fits = toolbox.map(toolbox.evaluate, population)
-        for fit, ind in zip(fits, population):
+        # add flights to parents
+        for ind in evolving_pop:
+            ind[i.scores][i.flights] += FLIGHTS_PER_GEN
+
+        # evaluate parents
+        fits = toolbox.map(toolbox.evaluate, evolving_pop)
+        for fit, ind in zip(fits, evolving_pop):
             ind.fitness.values = fit
 
         # survival of the fittest
-        population = toolbox.select(population, POP_SIZE)
-        population = toolbox.map(toolbox.clone, population)
-
+        evolving_pop = toolbox.select(evolving_pop, EVOLVE_POP_SIZE)
+        evolving_pop = toolbox.map(toolbox.clone, evolving_pop)
 
     # print output with top members
-    all_ind = tools.selBest(population, len(population))
+    all_ind = tools.selBest(evolving_pop, len(evolving_pop))
     for ind in all_ind:
         print str(ind)
-        o1, o2, o3 = customfunctions.evaluate(ind)
-        print "{0}  {1}  {2}\n".format(o1, o2, o3)
+        # o1, o2, o3, o4 = customfunctions.evaluate(ind)
+        o1, o2 = customfunctions.evaluate(ind)
+        # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
+        print "{0}  {1}\n".format(o1, o2)
 
-    # print round_reached
+    print round_reached
 
     # customfunctions.graphObjectives(population)
 
-
+    #
     # now compete best member of evolved population against "real players"
     print
     print "Best player vs population of real players: \n"
-    NUM_FLIGHTS = 5000
-    round_reached = [0, 0, 0, 0, 0, 0, 0, 0]
+
+    NUM_FLIGHTS = 10000
+
+    # reset round_reached for testing phase
+    round_reached = [0] * len(rewards)
 
     # get best player -- all_ind is the sorted population
-    best = all_ind[0]
+    best = toolbox.clone(all_ind[0])
     customfunctions.memberReset(best)       # reset scores of best member
     del best.fitness.values                 # delete fitness values of best member
 
     # create population of real players
-    real_pop = toolbox.real_pop(n=POP_SIZE)
-    real_pop[0][0] = 'best_player'          # replace a member of real_pop with best
+    # real_pop = toolbox.real_pop(n=POP_SIZE)
+    customfunctions.resetScores(real_pop)
+
+    # put this in real_pop so that the best player will
+    # get a turn in the rotation -- but real_pop does
+    # not contain the player.  best is the player since
+    # we need to keep the genome bits for that player
+    best_member = toolbox.member()
+    best_member[i.type] = 'best_player'
+    real_pop.append(best_member)
+
+    # count rounds in which best member accepts an offer
+    best_accepts = [0] * len(rewards)
 
     # run a tournament for NUM_FLIGHTS flights
     for flight in range(NUM_FLIGHTS):
         # initial number of "free tickets"
         # new flight
-        offersLeft = random.randint(6, 7)
+        offersLeft = random.randint(2, 7)
         roundNumber = 0
 
         while offersLeft > 0 and roundNumber < len(rewards):
+            # determine decisions
+            for real_member in real_pop:
+                if real_member[i.type] == 'best_player':
+                    customfunctions.getDecisionBinary(offersLeft, roundNumber, best)
+                else:
+                    customfunctions.getRealPlayerDecision(real_member, roundNumber, offersLeft, flight)
+
             # so the first members aren't always the same
             random.shuffle(real_pop)
             # goes through everyone in population to decide whether to accept or reject the reward
             for member in real_pop:
-                if member[0] == 'best_player':
-                    offersLeft = customfunctions.makeDecisionBinary(offersLeft, roundNumber, best)
-                elif member[0] == 'couple':
-                    decision = real_players.playVariedPop('couple', roundNumber, offersLeft, flight)
-                    if decision == 1 and offersLeft >= 2:
-                        offersLeft -= 2
-                        member[1][1] += 2*rewards[roundNumber]
-                        member[1][2] += 2
-                    elif decision == 1 and offersLeft < 2:
-                        member[1][3] += 2
+                if member[i.type] == 'best_player':
+                    # if member hasn't already accepted an offer
+                    if best[i.already] == 0 and best[i.decision] == 1:
+                        # temporary to track rounds in which offers accepted by best member
+                        if offersLeft > 0:
+                            best_accepts[roundNumber] += 1
+                        offersLeft = customfunctions.applyDecisionBinary(offersLeft, roundNumber, best)
+                        # copy scores from best player to best player's placeholder in real_pop
+                        for s in range(len(member[i.scores])):
+                            member[i.scores][s] = best[i.scores][s]
+                    # reset decision
+                    best[i.decision] = 0
                 else:
-                    decision = real_players.playVariedPop(member[0], roundNumber, offersLeft, flight)
-                    if decision == 1 and offersLeft >= 1:
-                        offersLeft -= 1
-                        member[1][1] += rewards[roundNumber]
-                        member[1][2] += 1
-                    elif decision == 1 and offersLeft == 0:
-                        member[1][3] += 1
+                    if member[i.already] == 0 and member[i.decision] == 1:
+                        offersLeft = customfunctions.applyDecisionBinary(offersLeft, roundNumber, member)
+                    # reset decision
+                    member[i.decision] = 0
 
             # keep track of how many flights reach each round
             if offersLeft == 0 or roundNumber == len(rewards) - 1:
@@ -211,22 +283,43 @@ def main():
 
             roundNumber += 1
 
+            # # reset decisions
+            # best[i.decision] = 0
+            # customfunctions.resetDecisions(real_pop)
+
+        # reset the accepted offer flags for next flight
+        customfunctions.resetAccepts(real_pop)
+        best[i.already] = 0
+
     # add flights to members
     for member in real_pop:
-        member[1][0] += NUM_FLIGHTS
+        member[i.scores][i.flights] += NUM_FLIGHTS
+
+    best[i.scores][i.flights] += NUM_FLIGHTS
 
     # calculate fitness of population
     fits = toolbox.map(toolbox.evaluate, real_pop)
     for fit, ind in zip(fits, real_pop):
         ind.fitness.values = fit
 
+    # evaluate the evolved player and print
+    print "['best_player', {0}]".format(best[1])
+    # o1, o2, o3, o4 = customfunctions.evaluate(ind)
+    o1, o2 = customfunctions.evaluate(best)
+    # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
+    print "{0}  {1}\n".format(o1, o2)
+    print
+
     # print output with top members
     all_ind = tools.selBest(real_pop, len(real_pop))
     for ind in all_ind:
         print str(ind)
-        o1, o2, o3 = customfunctions.evaluate(ind)
-        print "{0}  {1}  {2}\n".format(o1, o2, o3)
+        # o1, o2, o3, o4 = customfunctions.evaluate(ind)
+        o1, o2 = customfunctions.evaluate(ind)
+        # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
+        print "{0}  {1}\n".format(o1, o2)
 
+    print("Best accepts: {0}\n".format(best_accepts))
     print round_reached
 
 

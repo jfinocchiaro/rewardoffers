@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from deap import tools, base, creator, algorithms
 import real_players
-from globals import index, rewards
+from globals import index as i, rewards
 
 
 # return element at front of list
@@ -26,40 +26,40 @@ def get_next(l):
 def evaluate(member):
     avg_reward = 0.0
     scaled_accept = scaled_lost = success_rate = 0.0
-    if member[index.scores][index.offers_accept] > 0:
+    if member[i.scores][i.offers_accept] > 0:
         # calculate average accepted offer
-        avg_reward = float(member[index.scores][index.reward_total]) / member[index.scores][index.offers_accept]
+        avg_reward = float(member[i.scores][i.reward_total]) / member[i.scores][i.offers_accept]
     '''
     if member[1][2] > 0:
         scaled_accept = (float(member[1][2]) / member[1][0]) * 100  # calculate accepted scaled by flights
     if member[1][3] > 0:
         scaled_lost = (float(member[1][3]) / member[1][0]) * 100    # calculate lost scaled by flights
     '''
-    if member[index.scores][index.attempts] > 0:
-        success_rate = (float(member[index.scores][index.offers_accept]) / member[index.scores][index.attempts])
+    if member[i.scores][i.attempts] > 0:
+        success_rate = (float(member[i.scores][i.offers_accept]) / member[i.scores][i.attempts])
     # return avg_reward, scaled_accept, scaled_lost, success_rate
     return avg_reward, success_rate
 
 
 def resetScores(population):
     for member in population:
-        for i in range(len(member[index.scores])):
-            member[index.scores][i] = 0
+        for s in range(len(member[i.scores])):
+            member[i.scores][s] = 0
 
 
 def memberReset(member):
-    for i in range(len(member[index.scores])):
-        member[index.scores][i] = 0
+    for s in range(len(member[i.scores])):
+        member[i.scores][s] = 0
 
 
 def resetAccepts(population):
     for member in population:
-        member[index.already] = 0
+        member[i.already] = 0
 
 
 def resetDecisions(population):
     for member in population:
-        member[index.decision] = 0
+        member[i.decision] = 0
 
 
 # offersLeft number between 0 and 8 in decimal
@@ -119,18 +119,18 @@ def makeDecisionBinary(offersLeft, roundNumber, member):
     decision_spot = roundBin + offersLeftBin
 
     decision_spot = int(decision_spot, 2)
-    decision_bit = member[index.genome][decision_spot]
+    decision_bit = member[i.genome][decision_spot]
 
     if offersLeft > 0 and decision_bit == 1:
-        member[index.scores][index.reward_total] += offer       # update total reward
-        member[index.scores][index.offers_accept] += 1          # increment offers accepted
-        member[index.already] = 1                               # set bit indicating offer accepted
+        member[i.scores][i.reward_total] += offer               # update total reward
+        member[i.scores][i.offers_accept] += 1                  # increment offers accepted
+        member[i.already] = 1                                   # set bit indicating offer accepted
         offersLeft -= 1                                         # decrement offers remaining
-        member[index.scores][index.attempts] += 1               # increment attempts
+        member[i.scores][i.attempts] += 1                       # increment attempts
 
     elif offersLeft == 0 and decision_bit == 1:
-        member[index.scores][index.offers_lost] += 1            # increment offers lost
-        member[index.scores][index.attempts] += 1               # increment attempts
+        member[i.scores][i.offers_lost] += 1                    # increment offers lost
+        member[i.scores][i.attempts] += 1                       # increment attempts
 
     return offersLeft
 
@@ -144,7 +144,7 @@ def getDecisionBinary(offersLeft, roundNumber, member):
     decision_spot = roundBin + offersLeftBin
     decision_spot = int(decision_spot, 2)
 
-    member[index.decision] = member[index.genome][decision_spot]
+    member[i.decision] = member[i.genome][decision_spot]
 
 
 # apply the decision of a member
@@ -155,15 +155,15 @@ def applyDecisionBinary(offersLeft, roundNumber, member):
     offer = rewards[roundNumber]
 
     if offersLeft > 0:
-        member[index.scores][index.reward_total] += offer       # update total reward
-        member[index.scores][index.offers_accept] += 1          # increment offers accepted
-        member[index.already] = 1                               # set bit indicating offer accepted
+        member[i.scores][i.reward_total] += offer               # update total reward
+        member[i.scores][i.offers_accept] += 1                  # increment offers accepted
+        member[i.already] = 1                                   # set bit indicating offer accepted
         offersLeft -= 1                                         # decrement offers remaining
-        member[index.scores][index.attempts] += 1               # increment attempts
+        member[i.scores][i.attempts] += 1                       # increment attempts
 
     elif offersLeft == 0:
-        member[index.scores][index.offers_lost] += 1            # increment offers lost
-        member[index.scores][index.attempts] += 1               # increment attempts
+        member[i.scores][i.offers_lost] += 1                    # increment offers lost
+        member[i.scores][i.attempts] += 1                       # increment attempts
 
     return offersLeft
 
@@ -172,29 +172,29 @@ def applyDecisionBinary(offersLeft, roundNumber, member):
 # # return the number of offers remaining after processing the decision
 # def getRealPlayerDecision(real_member, round_num, offers_left, flt):
 #     if real_member[0] == 'couple':
-#         if real_member[index.already] == 0:
+#         if real_member[i.already] == 0:
 #             decision = real_players.playVariedPop('couple', round_num, offers_left, flt)
 #             if decision == 1 and offers_left >= 2:
 #                 offers_left -= 2
-#                 real_member[index.scores][index.reward_total] += 2 * rewards[round_num]
-#                 real_member[index.scores][index.offers_accept] += 2
-#                 real_member[index.scores][index.attempts] += 2
+#                 real_member[i.scores][i.reward_total] += 2 * rewards[round_num]
+#                 real_member[i.scores][i.offers_accept] += 2
+#                 real_member[i.scores][i.attempts] += 2
 #                 real_member[index.already] = 1
 #             elif decision == 1 and offers_left < 2:
-#                 real_member[index.scores][index.offers_lost] += 2
-#                 real_member[index.scores][index.attempts] += 2
+#                 real_member[i.scores][i.offers_lost] += 2
+#                 real_member[i.scores][i.attempts] += 2
 #     else:
-#         if real_member[index.already] == 0:
+#         if real_member[i.already] == 0:
 #             decision = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
 #             if decision == 1 and offers_left >= 1:
 #                 offers_left -= 1
-#                 real_member[index.scores][index.reward_total] += rewards[round_num]
-#                 real_member[index.scores][index.offers_accept] += 1
-#                 real_member[index.scores][index.attempts] += 1
-#                 real_member[index.already] = 1
+#                 real_member[i.scores][i.reward_total] += rewards[round_num]
+#                 real_member[i.scores][i.offers_accept] += 1
+#                 real_member[i.scores][i.attempts] += 1
+#                 real_member[i.already] = 1
 #             elif decision == 1 and offers_left == 0:
-#                 real_member[index.scores][index.offers_lost] += 1
-#                 real_member[index.scores][index.attempts] += 1
+#                 real_member[i.scores][i.offers_lost] += 1
+#                 real_member[i.scores][i.attempts] += 1
 #     return offers_left
 
 
@@ -204,15 +204,15 @@ def getRealPlayerDecision(real_member, round_num, offers_left, flt):
     decision = 0
 
     if real_member[0] == 'couple':
-        if real_member[index.already] == 0:
-            real_member[index.decision] = real_players.playVariedPop('couple', round_num, offers_left, flt)
+        if real_member[i.already] == 0:
+            real_member[i.decision] = real_players.playVariedPop('couple', round_num, offers_left, flt)
     else:
-        if real_member[index.already] == 0:
-            real_member[index.decision] = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
+        if real_member[i.already] == 0:
+            real_member[i.decision] = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
 
 
 def mutateFlipBit(individual, indpb=0.015):
-    genome = individual[index.genome]
+    genome = individual[i.genome]
     #print genome
     genome = tools.mutFlipBit(genome, indpb)[0]
     #print genome
@@ -220,7 +220,7 @@ def mutateFlipBit(individual, indpb=0.015):
     return individual,
 
 
-def pareto_frontier(Xs, Ys, maxX = True, maxY = False):
+def pareto_frontier(Xs, Ys, maxX = True, maxY = True):
     # Sort the list in either ascending or descending order of X
     myList = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxX)
     # Start the Pareto frontier with the first value in the sorted list
@@ -239,17 +239,17 @@ def pareto_frontier(Xs, Ys, maxX = True, maxY = False):
     return p_frontX, p_frontY
 
 
-def graphObjectives(population):
+def graphObjectives3d(population):
     xs = []
     ys = []
     zs = []
     for member in population:
-        x, y, z = evaluate(member)
+        x, y = evaluate(member)
         xs.append(x)     # average reward
         ys.append(y)     # scaled offers accepted
         zs.append(z)     # scaled offers lost
 
-    p_front = pareto_frontier(xs, ys, maxX = True, maxY = False)
+    p_front = pareto_frontier(xs, ys, maxX = True, maxY = True)
 
     # plt.scatter(xs, ys)
     fig = plt.figure()
@@ -264,4 +264,32 @@ def graphObjectives(population):
 
     # Axes3D.scatter(xs, ys, zs)
     # plt.plot(p_front[0], p_front[1])
+    plt.show()
+
+
+def graphObjectives(population):
+    xs = []
+    ys = []
+    for member in population:
+        x, y = evaluate(member)
+        xs.append(x)     # average reward
+        ys.append(y)     # success rate
+
+    p_front = pareto_frontier(xs, ys, maxX = True, maxY = True)
+
+    plt.scatter(xs, ys)
+    '''
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(xs, ys, zs, c='b', marker='x')
+
+
+    ax.set_xlabel('Avg Reward')
+    ax.set_ylabel('Offers Accepted')
+    ax.set_zlabel('Offers Lost')
+
+    # Axes3D.scatter(xs, ys, zs)
+    '''
+    plt.plot(p_front[0], p_front[1])
     plt.show()

@@ -1,17 +1,17 @@
 import random
 
-rewards = [500, 1000, 2000, 3000, 4000, 5000, 7500, 10000]
+from globals import rewards
 
 # real member types:
 #
-# business:   never accept
-# dude:       always accept
-# last:       accept last available offer
-# ka-ching:   accept if 5th round or higher
-# ka-ching+:  accept if last round
-# mod25:      accept if flight count % 25 == 0
-# rand-ching-low: accept at random -- prob increases with amount - max prob = 0.5
-# rand-ching-high: accept at random - prob increases with amount - max prob = 1
+# business:             never accept
+# dude:                 always accept
+# last:                 accept last available offer
+# ka-ching:             accept if round >= 4
+# ka-ching+:            accept if last round
+# linear-low:           accept at random -- prob increases with amount - max prob = 0.5
+# linear:               accept at random - prob increases with amount - max prob = 1
+# exponential:          probability of acceptance doubles each round
 
 
 # not currently being used
@@ -23,96 +23,88 @@ def getRealMix(length):
     l = []
     # about 12% of passengers, on average, are business travelers
     business_num = int(random.gauss(0.15, 0.06) * length)
-    for i in range(business_num):
-        l.append('business')
-    l.append('dude')
-    l.append('dude')
-    num_left = length - len(l)
-    for i in range(int(random.gauss(0.25, 0.08) * num_left)):
-        l.append('last')
-    for i in range(int(random.gauss(0.45, 0.08) * num_left)):
-        l.append('rand-ching-low')
-    for i in range(length - len(l)):
-        l.append('rand-ching-high')
+    l.extend(['business' for i in range(business_num)])
+
+    # there are likely to be a few passengers who will accept any offer
+    dude_num = 2
+    l.extend(['dude' for i in range(dude_num)])
+
+    # num_left = length - len(l)
+    # kaching_num = int(random.gauss(0.20, 0.06) * length)
+    # l.extend(['ka-ching' for i in range(kaching_num)])
+
+    last_num = int(random.gauss(0.05, 0.06) * length)
+    l.extend(['last' for i in range(last_num)])
+
+    exp_num = int(random.gauss(0.45, 0.06) * length)
+    l.extend(['exponential' for i in range(exp_num)])
+
+    lin_low_num = int(random.gauss(0.25, 0.06) * length)
+    l.extend(['linear-low' for i in range(lin_low_num)])
+
+    l.extend(['linear' for i in range(length - len(l))])
+
+    # len(l) may be > length
+    # shuffle l so that elements at end of list have a chance of
+    # getting into population
+    random.shuffle(l)
+
     return l
 
 
 def playVariedPop(oppName, round, offers, flight):
 
+    # default decision is 0
+    decision2 = 0
+
     # always decline
     if oppName == 'business':
-        decision2 = 0
+        pass
 
-    # always accept
-    elif oppName == 'dude':
-        decision2 = 1
+    elif oppName == 'exponential':
+        if random.random() < 1./2**(len(rewards) - round):
+            decision = 1
 
-    # accept 2 offers if available
-    elif oppName == 'couple':
-        if offers >= 2:
+    elif oppName == 'linear-low':
+        if random.randint(0, 40000) < rewards[round]:
             decision2 = 1
-        else:
-            decision2 = 0
+
+    elif oppName == 'linear':
+        if random.randint(0, 20000) < rewards[round]:
+            decision2 = 1
 
     # accept if one left
     elif oppName == 'last':
         if offers == 1:
             decision2 = 1
-        else:
-            decision2 = 0
+
+    # always accept
+    elif oppName == 'dude':
+        decision2 = 1
 
     # accept if two or fewer left
     elif oppName == 'last2':
         if 0 < offers <= 2:
             decision2 = 1
-        else:
-            decision2 = 0
 
     # accept if round at least 4
     elif oppName == 'ka-ching':
         if round >= 4:
             decision2 = 1
-        else:
-            decision2 = 0
 
     # accept if last round
     elif oppName == 'ka-ching+':
         if round == len(rewards)-1:
             decision2 = 1
-        else:
-            decision2 = 0
 
     # random
     elif oppName == 'random':
         decision2 = random.randint(0, 1)
 
-    # accept every 10th flight
-    elif oppName == 'mod10':
-        if flight % 10 == 0:
+    # accept 2 offers if available
+    elif oppName == 'couple':
+        if offers >= 2:
             decision2 = 1
-        else:
-            decision2 = 0
-
-    # accept every 25th flight
-    elif oppName == 'mod25':
-        if flight % 25 == 1:
-            decision2 = 1
-        else:
-            decision2 = 0
-
-    elif oppName == 'rand-ching-low':
-        # if random.randint(0, 15) < round + 1:
-        if random.randint(0, 40000) < rewards[round]:
-            decision2 = 1
-        else:
-            decision2 = 0
-
-    elif oppName == 'rand-ching-high':
-        # if random.randint(0, 7) < round + 1:
-        if random.randint(0, 20000) < rewards[round]:
-            decision2 = 1
-        else:
-            decision2 = 0
 
     # else
     else:
