@@ -14,11 +14,6 @@ from globals import rewards
 # exponential:          probability of acceptance doubles each round
 
 
-# not currently being used
-def getVariedPopList():
-    return ['business', 'last', 'ka-ching', 'ka-ching+', 'random', 'mod10', 'mod25']
-
-
 def getRealMix(length):
     l = []
     # about 12% of passengers, on average, are business travelers
@@ -63,7 +58,11 @@ def playVariedPop(oppName, round, offers, flight):
 
     elif oppName == 'exponential':
         if random.random() < 1./2**(len(rewards) - round):
-            decision = 1
+            decision2 = 1
+
+    elif oppName == 'expovariate':
+        if (random.expovariate(1./(round + 1)))/(round + 1) > 2:
+            decision2 = 1
 
     elif oppName == 'linear-low':
         if random.randint(0, 40000) < rewards[round]:

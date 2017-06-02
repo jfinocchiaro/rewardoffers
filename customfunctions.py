@@ -16,13 +16,6 @@ def get_next(l):
     return elt
 
 
-# evaluate score maximizing financial gains and minimizing missed oppotunities
-# def evaluate(member):
-#     # reward = 0
-#     reward = member[1][0]
-#     missedOpps = member[1][1]
-#     return reward, missedOpps
-
 def evaluate(member):
     avg_reward = 0.0
     scaled_accept = scaled_lost = success_rate = 0.0
@@ -168,36 +161,6 @@ def applyDecisionBinary(offersLeft, roundNumber, member):
     return offersLeft
 
 
-# # determine and process decision for a member of real_population
-# # return the number of offers remaining after processing the decision
-# def getRealPlayerDecision(real_member, round_num, offers_left, flt):
-#     if real_member[0] == 'couple':
-#         if real_member[i.already] == 0:
-#             decision = real_players.playVariedPop('couple', round_num, offers_left, flt)
-#             if decision == 1 and offers_left >= 2:
-#                 offers_left -= 2
-#                 real_member[i.scores][i.reward_total] += 2 * rewards[round_num]
-#                 real_member[i.scores][i.offers_accept] += 2
-#                 real_member[i.scores][i.attempts] += 2
-#                 real_member[index.already] = 1
-#             elif decision == 1 and offers_left < 2:
-#                 real_member[i.scores][i.offers_lost] += 2
-#                 real_member[i.scores][i.attempts] += 2
-#     else:
-#         if real_member[i.already] == 0:
-#             decision = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
-#             if decision == 1 and offers_left >= 1:
-#                 offers_left -= 1
-#                 real_member[i.scores][i.reward_total] += rewards[round_num]
-#                 real_member[i.scores][i.offers_accept] += 1
-#                 real_member[i.scores][i.attempts] += 1
-#                 real_member[i.already] = 1
-#             elif decision == 1 and offers_left == 0:
-#                 real_member[i.scores][i.offers_lost] += 1
-#                 real_member[i.scores][i.attempts] += 1
-#     return offers_left
-
-
 # determine and set decision for a member of real_population
 def getRealPlayerDecision(real_member, round_num, offers_left, flt):
     # default value
@@ -244,7 +207,7 @@ def graphObjectives3d(population):
     ys = []
     zs = []
     for member in population:
-        x, y = evaluate(member)
+        x, y, z = evaluate(member)
         xs.append(x)     # average reward
         ys.append(y)     # scaled offers accepted
         zs.append(z)     # scaled offers lost
@@ -278,18 +241,5 @@ def graphObjectives(population):
     p_front = pareto_frontier(xs, ys, maxX = True, maxY = True)
 
     plt.scatter(xs, ys)
-    '''
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    ax.scatter(xs, ys, zs, c='b', marker='x')
-
-
-    ax.set_xlabel('Avg Reward')
-    ax.set_ylabel('Offers Accepted')
-    ax.set_zlabel('Offers Lost')
-
-    # Axes3D.scatter(xs, ys, zs)
-    '''
     plt.plot(p_front[0], p_front[1])
     plt.show()

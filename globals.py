@@ -22,5 +22,5 @@ class index:
 
 
 # sequence of rewards offered
-rewards = [500, 750, 1000, 2000, 2500, 5000, 7500, 10000]
+rewards = [500, 750, 1000, 1500, 2500, 5000, 7500, 10000]
 

@@ -76,7 +76,7 @@ def main():
     toolbox.register("mutate", customfunctions.mutateFlipBit, indpb=0.015)
     toolbox.register("select", tools.selNSGA2)
 
-    NGEN = 2000             # number of generations of evolution
+    NGEN = 5000             # number of generations of evolution
     CXPB = 0.9              # crossover probability
     MUTPB = 0.1             # mutation probability
 

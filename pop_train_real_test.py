@@ -72,7 +72,7 @@ def main():
     toolbox.register("mutate", customfunctions.mutateFlipBit, indpb=0.015)
     toolbox.register("select", tools.selNSGA2)
 
-    NGEN = 5000             # number of generations of evolution
+    NGEN = 3000             # number of generations of evolution
     CXPB = 0.9              # crossover probability
     MUTPB = 0.1             # mutation probability
 
@@ -84,6 +84,9 @@ def main():
 
     # create the population of real members to train against
     real_pop = toolbox.real_pop(n=POP_SIZE)
+
+    total_offers_made = 0
+    total_offers_accepted = 0
 
     # get data for parents
     for flight in range(FLIGHTS_PER_GEN):
@@ -245,6 +248,8 @@ def main():
         # initial number of "free tickets"
         # new flight
         offersLeft = random.randint(2, 7)
+        total_offers_made += offersLeft
+
         roundNumber = 0
 
         while offersLeft > 0 and roundNumber < len(rewards):
@@ -319,9 +324,13 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
+    for m in real_pop:
+        total_offers_accepted += m[i.scores][i.offers_accept]
+
     print("Best accepts: {0}\n".format(best_accepts))
     print round_reached
 
+    print('Offers made: {0}   Offers accepted: {1}'.format(total_offers_made, total_offers_accepted))
 
 if __name__ == "__main__":
     main()
