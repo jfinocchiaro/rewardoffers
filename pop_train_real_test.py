@@ -6,7 +6,7 @@ import math
 from deap import tools, base, creator, algorithms
 import customfunctions
 import real_players
-from globals import index as i, rewards
+from globals import index as i, rewards, genome_len
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     creator.create("Individual", list, fitness=creator.FitnessMulti)
     # creator.create("Member", list, fitness=creator.FitnessMulti)
 
-    IND_SIZE = 64           # length of genome
+    # IND_SIZE = 64           # length of genome
     POP_SIZE = 100          # number of members in the population
     EVOLVE_POP_SIZE = 100    # number of members of evolving population
     FLIGHTS_PER_GEN = 100   # number of simulations in one generation
@@ -38,7 +38,7 @@ def main():
     toolbox.register("decision", random.randint, 0, 3)                  # create an int 0 to 3
     toolbox.register("type", customfunctions.get_next, player_list)     # get type from player list
 
-    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)   # list of bits makes up genome
+    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, genome_len)   # list of bits makes up genome
 
     # number of flights
     # total of rewards

@@ -10,7 +10,7 @@ import math
 from deap import tools, base, creator, algorithms
 import customfunctions
 import real_players
-from globals import index as i, rewards
+from globals import index as i, rewards, genome_len
 
 
 def main():
@@ -28,7 +28,7 @@ def main():
     creator.create("Individual", list, fitness=creator.FitnessMulti)
     # creator.create("Member", list, fitness=creator.FitnessMulti)
 
-    IND_SIZE = 64           # length of genome
+    #IND_SIZE = 64           # length of genome
     POP_SIZE = 100          # number of members in the population
     EVOLVE_POP_SIZE = 50    # number of members of evolving population
     FLIGHTS_PER_GEN = 100   # number of simulations in one generation
@@ -42,7 +42,7 @@ def main():
     toolbox.register("decision", random.randint, 0, 3)                  # create an int 0 to 3
     toolbox.register("type", customfunctions.get_next, player_list)     # get type from player list
 
-    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, IND_SIZE)   # list of bits makes up genome
+    toolbox.register("genome", tools.initRepeat, list, toolbox.bit, genome_len)   # list of bits makes up genome
 
     # number of flights
     # total of rewards
@@ -72,13 +72,13 @@ def main():
 
     # initialize evolution methods
     toolbox.register("evaluate", customfunctions.evaluate)
-    toolbox.register("mate", tools.cxUniform, indpb=0.5)
+    toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register("mutate", customfunctions.mutateFlipBit, indpb=0.015)
     toolbox.register("select", tools.selNSGA2)
 
-    NGEN = 5000             # number of generations of evolution
+    NGEN = 2000             # number of generations of evolution
     CXPB = 0.9              # crossover probability
-    MUTPB = 0.1             # mutation probability
+    MUTPB = 0.05            # mutation probability
 
     round_reached = [0] * len(rewards)
 
@@ -163,17 +163,24 @@ def main():
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
             if random.random() < CXPB:
                 toolbox.mate(child1[i.genome], child2[i.genome])
-                del child1.fitness.values
+                # del child1.fitness.values
                 # customfunctions.memberReset(child1)
-                del child2.fitness.values
+                # del child2.fitness.values
                 # customfunctions.memberReset(child2)
+            else:
+                toolbox.mutate(child1)
+                toolbox.mutate(child2)
+            del child1.fitness.values
+            del child2.fitness.values
 
+        '''
         # mutation
         for mutant in offspring:
             if random.random() < MUTPB:
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
                 # customfunctions.memberReset(mutant)
+        '''
 
         # create combined population
         evolving_pop.extend(offspring)

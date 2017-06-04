@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from deap import tools, base, creator, algorithms
 import real_players
-from globals import index as i, rewards
+from globals import index as i, rewards, genome_len
 
 
 # return element at front of list
@@ -174,7 +174,7 @@ def getRealPlayerDecision(real_member, round_num, offers_left, flt):
             real_member[i.decision] = real_players.playVariedPop(real_member[0], round_num, offers_left, flt)
 
 
-def mutateFlipBit(individual, indpb=0.015):
+def mutateFlipBit(individual, indpb=1./genome_len):
     genome = individual[i.genome]
     #print genome
     genome = tools.mutFlipBit(genome, indpb)[0]

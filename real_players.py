@@ -5,7 +5,7 @@ from globals import rewards
 # real member types:
 #
 # business:             never accept
-# dude:                 always accept
+# dude:                 accept any offer with high probability
 # last:                 accept last available offer
 # ka-ching:             accept if round >= 4
 # ka-ching+:            accept if last round
@@ -21,7 +21,7 @@ def getRealMix(length):
     l.extend(['business' for i in range(business_num)])
 
     # there are likely to be a few passengers who will accept any offer
-    dude_num = 2
+    dude_num = 1
     l.extend(['dude' for i in range(dude_num)])
 
     # num_left = length - len(l)
@@ -79,7 +79,8 @@ def playVariedPop(oppName, round, offers, flight):
 
     # always accept
     elif oppName == 'dude':
-        decision2 = 1
+        if random.random() < 0.75:
+            decision2 = 1
 
     # accept if two or fewer left
     elif oppName == 'last2':

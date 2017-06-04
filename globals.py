@@ -7,6 +7,7 @@ class index:
     def __init__(self):
         pass
 
+    # indices into individuals and members
     genome = 0          # for individual (evolving population)
     type = 0            # member type for member of real population
     scores = 1          # metrics tracked for individual and member
@@ -24,3 +25,5 @@ class index:
 # sequence of rewards offered
 rewards = [500, 750, 1000, 1500, 2500, 5000, 7500, 10000]
 
+# length of genome
+genome_len = 64
