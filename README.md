@@ -1,4 +1,4 @@
-# reward offers
+# reward offers or Iterated Passenger's Dilemma
 
   Dependencies of this program include DEAP and some of the pre-installed python packages
 

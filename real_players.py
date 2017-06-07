@@ -1,4 +1,5 @@
 import random
+import math
 
 from globals import rewards
 
@@ -6,7 +7,7 @@ from globals import rewards
 #
 # business:             never accept
 # dude:                 accept any offer with high probability
-# last:                 accept last available offer
+# last:                 accept last available with probability 0.5
 # ka-ching:             accept if round >= 4
 # ka-ching+:            accept if last round
 # linear-low:           accept at random -- prob increases with amount - max prob = 0.5
@@ -21,20 +22,23 @@ def getRealMix(length):
     l.extend(['business' for i in range(business_num)])
 
     # there are likely to be a few passengers who will accept any offer
-    dude_num = 1
+    dude_num = math.floor(length * .01)
     l.extend(['dude' for i in range(dude_num)])
 
     # num_left = length - len(l)
     # kaching_num = int(random.gauss(0.20, 0.06) * length)
     # l.extend(['ka-ching' for i in range(kaching_num)])
 
-    last_num = int(random.gauss(0.05, 0.06) * length)
+    last_num = int(random.gauss(0.08, 0.05) * length)
     l.extend(['last' for i in range(last_num)])
 
-    exp_num = int(random.gauss(0.45, 0.06) * length)
+    exp_num = int(random.gauss(0.24, 0.06) * length)
     l.extend(['exponential' for i in range(exp_num)])
 
-    lin_low_num = int(random.gauss(0.25, 0.06) * length)
+    exp_num = int(random.gauss(0.23, 0.06) * length)
+    l.extend(['expovariate' for i in range(exp_num)])
+
+    lin_low_num = int(random.gauss(0.20, 0.06) * length)
     l.extend(['linear-low' for i in range(lin_low_num)])
 
     l.extend(['linear' for i in range(length - len(l))])
@@ -61,7 +65,7 @@ def playVariedPop(oppName, round, offers, flight):
             decision2 = 1
 
     elif oppName == 'expovariate':
-        if (random.expovariate(1./(round + 1)))/(round + 1) > 2:
+        if random.expovariate(len(rewards) - round) > 0.5:
             decision2 = 1
 
     elif oppName == 'linear-low':
@@ -75,7 +79,8 @@ def playVariedPop(oppName, round, offers, flight):
     # accept if one left
     elif oppName == 'last':
         if offers == 1:
-            decision2 = 1
+            if random.random() < 0.5:
+                decision2 = 1
 
     # always accept
     elif oppName == 'dude':

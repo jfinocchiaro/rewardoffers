@@ -2,6 +2,7 @@
 # Iterated Passenger's Dilemma
 #
 # Train the population against the "real players" and test against the "real players"
+# The real population changes for every flight during training
 #
 
 import numpy as np
@@ -35,7 +36,8 @@ def main():
     FLIGHTS_PER_GEN = 100   # number of simulations in one generation
 
     # get list of player names (not uniform)
-    player_list = real_players.getRealMix(POP_SIZE)
+    # larger than needed to allow shuffling to get different mixes of members
+    player_list = real_players.getRealMix(3 * POP_SIZE)
 
     toolbox = base.Toolbox()                                            # initialize toolbox
     toolbox.register("initZero", random.randint, 0, 0)                  # create a bit 0
@@ -87,14 +89,18 @@ def main():
     # create the population of members to be trained
     evolving_pop = toolbox.population(n=EVOLVE_POP_SIZE)  # initialize population
 
-    # create the population of real members to train against
-    real_pop = toolbox.real_pop(n=POP_SIZE)
 
     # play each member of evolving_pop against real_pop
     for ind in evolving_pop:
 
         # get data for parents
         for flight in range(FLIGHTS_PER_GEN):
+            # shuffle the player list to get a different mix
+            random.shuffle(player_list)
+
+            # now create the population of real members for this flight
+            real_pop = toolbox.real_pop(n=POP_SIZE)
+
             # initial number of "free tickets"
             # new flight
             offersLeft = random.randint(2, 7)
@@ -160,7 +166,8 @@ def main():
         # create offspring
         offspring = toolbox.map(toolbox.clone, evolving_pop)
 
-        # crossover
+        # crossover and mutation
+        # if members aren't crossed-over, mutate them
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
             if random.random() < CXPB:
                 toolbox.mate(child1[i.genome], child2[i.genome])
@@ -191,6 +198,12 @@ def main():
 
             # flights for combined population
             for flight in range(FLIGHTS_PER_GEN):
+                # shuffle the player list to get a different mix
+                random.shuffle(player_list)
+
+                # now create the population of real members for this flight
+                real_pop = toolbox.real_pop(n=POP_SIZE)
+
                 # initial number of "free tickets"
                 # new flight
                 offersLeft = random.randint(2, 7)
