@@ -22,7 +22,7 @@ def getRealMix(length):
     l.extend(['business' for i in range(business_num)])
 
     # there are likely to be a few passengers who will accept any offer
-    dude_num = math.floor(length * .01)
+    dude_num = int(math.floor(length * .01))
     l.extend(['dude' for i in range(dude_num)])
 
     # num_left = length - len(l)

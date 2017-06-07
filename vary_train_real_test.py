@@ -7,6 +7,7 @@
 
 import numpy as np
 import random
+from datetime import datetime
 import itertools
 import math
 
@@ -90,20 +91,25 @@ def main():
     evolving_pop = toolbox.population(n=EVOLVE_POP_SIZE)  # initialize population
 
 
-    # play each member of evolving_pop against real_pop
-    for ind in evolving_pop:
+    # some number of flights in each generation
+    for flight in range(FLIGHTS_PER_GEN):
 
-        # get data for parents
-        for flight in range(FLIGHTS_PER_GEN):
-            # shuffle the player list to get a different mix
-            random.shuffle(player_list)
+        # shuffle the player list to get a different mix
+        random.shuffle(player_list)
 
-            # now create the population of real members for this flight
-            real_pop = toolbox.real_pop(n=POP_SIZE)
+        # now create the population of real members for this flight
+        real_pop = toolbox.real_pop(n=POP_SIZE)
+
+        # get number of offers for this flight so that it can be reused
+        # for each member of the evolving population
+        offers_this_flight = random.randint(2, 7)
+
+        # play each member of evolving_pop against real_pop
+        for ind in evolving_pop:
 
             # initial number of "free tickets"
             # new flight
-            offersLeft = random.randint(2, 7)
+            offersLeft = offers_this_flight
             roundNumber = 0
 
             while offersLeft > 0 and roundNumber < len(rewards):
@@ -144,7 +150,7 @@ def main():
                 # customfunctions.resetDecisions(real_pop)
 
             # reset the accepted offer flags for next flight
-            customfunctions.resetAccepts(real_pop)
+            # customfunctions.resetAccepts(real_pop)
             customfunctions.resetAccepts(evolving_pop)
 
     # add flights to parents
@@ -161,7 +167,8 @@ def main():
     for gen in range(NGEN):
 
         if gen % 100 == 0:
-            print "Generation " + str(gen)
+            t = datetime.now()
+            print("Generation: {0:5d}    {1:02d}:{2:02d}:{3:02d}".format(str(gen), t.hour, t.minute, t.second))
 
         # create offspring
         offspring = toolbox.map(toolbox.clone, evolving_pop)
@@ -194,19 +201,25 @@ def main():
         evolving_pop.extend(offspring)
         evolving_pop = toolbox.map(toolbox.clone, evolving_pop)
 
-        for ind in evolving_pop:
+        # some number of flights in each generation
+        for flight in range(FLIGHTS_PER_GEN):
 
-            # flights for combined population
-            for flight in range(FLIGHTS_PER_GEN):
-                # shuffle the player list to get a different mix
-                random.shuffle(player_list)
+            # shuffle the player list to get a different mix
+            random.shuffle(player_list)
 
-                # now create the population of real members for this flight
-                real_pop = toolbox.real_pop(n=POP_SIZE)
+            # now create the population of real members for this flight
+            real_pop = toolbox.real_pop(n=POP_SIZE)
+
+            # get number of offers for this flight so that it can be reused
+            # for each member of the evolving population
+            offers_this_flight = random.randint(2, 7)
+
+            # play each member of evolving_pop against real_pop
+            for ind in evolving_pop:
 
                 # initial number of "free tickets"
                 # new flight
-                offersLeft = random.randint(2, 7)
+                offersLeft = offers_this_flight
                 roundNumber = 0
 
                 while offersLeft > 0 and roundNumber < len(rewards):
@@ -247,7 +260,7 @@ def main():
                     # customfunctions.resetDecisions(real_pop)
 
                 # reset the accepted offer flags for next flight
-                customfunctions.resetAccepts(real_pop)
+                # customfunctions.resetAccepts(real_pop)
                 customfunctions.resetAccepts(evolving_pop)
 
         # add flights to offspring
