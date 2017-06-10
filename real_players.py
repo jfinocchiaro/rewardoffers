@@ -1,7 +1,7 @@
 import random
 import math
 
-from globals import rewards
+from globals import index as i, rewards
 
 # real member types:
 #
@@ -32,10 +32,10 @@ def getRealMix(length):
     last_num = int(random.gauss(0.08, 0.05) * length)
     l.extend(['last' for i in range(last_num)])
 
-    exp_num = int(random.gauss(0.24, 0.06) * length)
+    exp_num = int(random.gauss(0.24, 0.08) * length)
     l.extend(['exponential' for i in range(exp_num)])
 
-    exp_num = int(random.gauss(0.23, 0.06) * length)
+    exp_num = int(random.gauss(0.23, 0.08) * length)
     l.extend(['expovariate' for i in range(exp_num)])
 
     lin_low_num = int(random.gauss(0.20, 0.06) * length)
@@ -49,6 +49,28 @@ def getRealMix(length):
     random.shuffle(l)
 
     return l
+
+
+def count_types(real_pop):
+    counts = [0, 0, 0, 0, 0, 0, 0]
+
+    for member in real_pop:
+        if member[i.type] == 'business':
+            counts[0] += 1
+        elif member[i.type] == 'dude':
+            counts[1] += 1
+        elif member[i.type] == 'last':
+            counts[2] += 1
+        elif member[i.type] == 'exponential':
+            counts[3] += 1
+        elif member[i.type] == 'expovariate':
+            counts[4] += 1
+        elif member[i.type] == 'linear-low':
+            counts[5] += 1
+        elif member[i.type] == 'linear':
+            counts[6] += 1
+
+    return counts
 
 
 def playVariedPop(oppName, round, offers, flight):
