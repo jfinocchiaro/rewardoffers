@@ -100,6 +100,10 @@ def main():
         # now create the population of real members for this flight
         real_pop = toolbox.real_pop(n=POP_SIZE)
 
+        # print the population mix
+        if flight == 0:
+            print real_players.count_types(real_pop)
+
         # get number of offers for this flight so that it can be reused
         # for each member of the evolving population
         offers_this_flight = random.randint(2, 7)
@@ -150,7 +154,7 @@ def main():
                 # customfunctions.resetDecisions(real_pop)
 
             # reset the accepted offer flags for next flight
-            # customfunctions.resetAccepts(real_pop)
+            customfunctions.resetAccepts(real_pop)
             customfunctions.resetAccepts(evolving_pop)
 
     # add flights to parents
@@ -168,7 +172,7 @@ def main():
 
         if gen % 100 == 0:
             t = datetime.now()
-            print("Generation: {0:5d}    {1:02d}:{2:02d}:{3:02d}".format(str(gen), t.hour, t.minute, t.second))
+            print("\nGeneration: {0:5d}    {1:02d}:{2:02d}:{3:02d}\n".format(gen, t.hour, t.minute, t.second))
 
         # create offspring
         offspring = toolbox.map(toolbox.clone, evolving_pop)
@@ -209,6 +213,10 @@ def main():
 
             # now create the population of real members for this flight
             real_pop = toolbox.real_pop(n=POP_SIZE)
+
+            # print the population mix
+            if flight == 0:
+                print real_players.count_types(real_pop)
 
             # get number of offers for this flight so that it can be reused
             # for each member of the evolving population
@@ -260,7 +268,7 @@ def main():
                     # customfunctions.resetDecisions(real_pop)
 
                 # reset the accepted offer flags for next flight
-                # customfunctions.resetAccepts(real_pop)
+                customfunctions.resetAccepts(real_pop)
                 customfunctions.resetAccepts(evolving_pop)
 
         # add flights to offspring
@@ -286,19 +294,24 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
+    print '\nCount of rounds reached for training phase:'
     print round_reached
 
     customfunctions.graphObjectives(evolving_pop)
 
     #
     # now compete best member of evolved population against "real players"
+    #
     print
-    print "Best player vs population of real players: \n"
+    print "\nBest player vs population of real players: \n"
 
     NUM_FLIGHTS = 10000
 
     # reset round_reached for testing phase
     round_reached = [0] * len(rewards)
+
+    # now create the population of real members to compete against
+    real_pop = toolbox.real_pop(n=POP_SIZE)
 
     # get best player -- all_ind is the sorted population
     best = toolbox.clone(all_ind[0])
@@ -377,20 +390,22 @@ def main():
 
     best[i.scores][i.flights] += NUM_FLIGHTS
 
-    # calculate fitness of population
+    # calculate fitness of pool
     fits = toolbox.map(toolbox.evaluate, real_pop)
     for fit, ind in zip(fits, real_pop):
         ind.fitness.values = fit
 
     # evaluate the evolved player and print
+    print 'Best evolved member:'
     print "['best_player', {0}]".format(best[1])
     # o1, o2, o3, o4 = customfunctions.evaluate(ind)
     o1, o2 = customfunctions.evaluate(best)
     # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
     print "{0}  {1}\n".format(o1, o2)
-    print
+    print("Best player accepts by round: {0}\n".format(best_accepts))
 
     # print output with top members
+    print '\nEntire population, including best evolved member:'
     all_ind = tools.selBest(real_pop, len(real_pop))
     for ind in all_ind:
         print str(ind)
@@ -399,8 +414,9 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
-    print("Best accepts: {0}\n".format(best_accepts))
+    print 'Count of rounds reached for testing phase:'
     print round_reached
+    print
 
 
 if __name__ == "__main__":

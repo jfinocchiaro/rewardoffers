@@ -294,6 +294,7 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
+    print '\nCount of rounds reached for training phase:'
     print round_reached
 
     customfunctions.graphObjectives(evolving_pop)
@@ -302,7 +303,7 @@ def main():
     # now compete best member of evolved population against "real players"
     #
     print
-    print "Best player vs population of real players: \n"
+    print "\nBest player vs varying population of real players: \n"
 
     NUM_FLIGHTS = 10000
 
@@ -342,7 +343,7 @@ def main():
         random.shuffle(pool)
         real_pop = pool[:POP_SIZE - 1]
         # delete these members from pool -- will add them back in after flight
-        # this is so that pool will include the updated statistics for those
+        # this is so that pool will include the updated statistics for members in real_pop
         pool = pool[POP_SIZE - 1:]
 
         while offersLeft > 0 and roundNumber < len(rewards):
@@ -352,7 +353,7 @@ def main():
             # determine decision for best evolved member
             customfunctions.getDecisionBinary(offersLeft, roundNumber, best)
 
-            # so the order of turns is different for each flight
+            # so the order of turns is different for each round
             random.shuffle(real_pop)
             # determine where the best evolved member goes in the order
             best_turn = random.randint(0, POP_SIZE - 2)
@@ -400,24 +401,25 @@ def main():
 
     best[i.scores][i.flights] += NUM_FLIGHTS
 
+    # put best member in pool for evaluation
+    best[i.genome] = 'best_player'
+    pool.append(best)
+
     # calculate fitness of population
-    fits = toolbox.map(toolbox.evaluate, real_pop)
-    for fit, ind in zip(fits, real_pop):
+    fits = toolbox.map(toolbox.evaluate, pool)
+    for fit, ind in zip(fits, pool):
         ind.fitness.values = fit
 
     # evaluate the evolved player and print
     print 'Best evolved member:'
     print "['best_player', {0}]".format(best[1])
-    # o1, o2, o3, o4 = customfunctions.evaluate(ind)
     o1, o2 = customfunctions.evaluate(best)
     # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
     print "{0}  {1}\n".format(o1, o2)
-    print
     print("Best player accepts by round: {0}\n".format(best_accepts))
 
     # print output with top members
-    print '\nEntire population, including best evolved member:'
-    pool.append(best)
+    print '\nEntire population, including best evolved member:\n'
     all_ind = tools.selBest(pool, POP_SIZE)
     for ind in all_ind:
         print str(ind)
@@ -425,7 +427,9 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
+    print 'Count of rounds reached for testing phase:'
     print round_reached
+    print
 
 
 if __name__ == "__main__":

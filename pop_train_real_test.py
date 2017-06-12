@@ -209,6 +209,7 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
+    print '\nCount of rounds reached for training phase:'
     print round_reached
 
     # customfunctions.graphObjectives(population)
@@ -313,7 +314,7 @@ def main():
     o1, o2 = customfunctions.evaluate(best)
     # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
     print "{0}  {1}\n".format(o1, o2)
-    print
+    print("Best player accepts by round: {0}\n".format(best_accepts))
 
     # print output with top members
     all_ind = tools.selBest(real_pop, len(real_pop))
@@ -324,13 +325,10 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
-    for m in real_pop:
-        total_offers_accepted += m[i.scores][i.offers_accept]
-
-    print("Best accepts: {0}\n".format(best_accepts))
+    print 'Count of rounds reached for testing phase:'
     print round_reached
+    print
 
-    print('Offers made: {0}   Offers accepted: {1}'.format(total_offers_made, total_offers_accepted))
 
 if __name__ == "__main__":
     main()

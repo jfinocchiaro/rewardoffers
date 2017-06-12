@@ -362,9 +362,10 @@ def main():
     o1, o2 = customfunctions.evaluate(best)
     # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
     print "{0}  {1}\n".format(o1, o2)
-    print
+    print("Best player accepts by round: {0}\n".format(best_accepts))
 
     # print output with top members
+    print '\nEntire population, including best evolved member:'
     all_ind = tools.selBest(real_pop, len(real_pop))
     for ind in all_ind:
         print str(ind)
@@ -373,8 +374,9 @@ def main():
         # print "{0}  {1}  {2}  {3}\n".format(o1, o2, o3, o4)
         print "{0}  {1}\n".format(o1, o2)
 
-    print("Best accepts: {0}\n".format(best_accepts))
+    print 'Count of rounds reached for testing phase:'
     print round_reached
+    print
 
 
 if __name__ == "__main__":
